@@ -1,0 +1,319 @@
+/* === STRUCTURE GLOBALE === */
+body {
+  margin: 0;
+  padding: 0;
+  background: linear-gradient(to bottom, #0e0e15, #1a102b);
+  font-family: 'Orbitron', sans-serif;
+  color: #fff;
+  overflow: hidden;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* === FENÊTRE & CONTRÔLES === */
+.window-drag-bar {
+  position: absolute;
+  top: 0;
+  width: 100%;
+  height: 30px;
+  -webkit-app-region: drag;
+}
+
+.window-controls {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  -webkit-app-region: no-drag;
+}
+
+#close-btn {
+  background: #a66cff;
+  border: none;
+  color: white;
+  font-size: 16px;
+  border-radius: 3px;
+  cursor: pointer;
+  padding: 5px 10px;
+}
+
+/* === TITRES === */
+h1.title {
+  font-size: 40px;
+  color: #a66cff;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.subtitle {
+  font-size: 18px;
+  color: #ccc;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+/* === INPUT === */
+input {
+  padding: 12px;
+  width: 280px;
+  border: 2px solid #a66cff;
+  border-radius: 6px;
+  background: #181824;
+  color: white;
+  font-size: 15px;
+  margin-bottom: 25px;
+  text-align: center;
+}
+
+/* === STATISTIQUES === */
+.stats {
+  display: flex;
+  justify-content: center;
+  gap: 25px;
+  margin-bottom: 25px;
+}
+
+.card {
+  background: #1c1c2f;
+  padding: 10px 15px;
+  border-radius: 10px;
+  font-size: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 130px;
+  box-shadow: 0 0 5px rgba(166, 108, 255, 0.3);
+}
+
+/* === BOUTON JEU === */
+.launch-btn {
+  background: #a66cff;
+  border: none;
+  padding: 12px 40px;
+  font-size: 16px;
+  border-radius: 5px;
+  color: white;
+  cursor: pointer;
+  margin-bottom: 30px;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  font-family: 'Orbitron', sans-serif;
+  /* ← Ajouté */
+}
+
+
+.launch-btn:hover {
+  background: #914ae6;
+}
+
+.launch-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+
+/* === LIENS === */
+.links {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+}
+
+.links a {
+  background: #272735;
+  padding: 8px 15px;
+  border-radius: 4px;
+  text-decoration: none;
+  color: #ccc;
+  font-size: 14px;
+  transition: 0.2s;
+}
+
+.links a:hover {
+  background: #a66cff;
+  color: white;
+}
+
+/* === ÉCRAN D'AUTH === */
+#auth-screen {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #0e0e15;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #a66cff;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 16px;
+  z-index: 9999;
+}
+
+/* === DISCORD USER BLOC === */
+.discord-container {
+  position: absolute;
+  top: 15px;
+  left: 20px;
+  z-index: 1000;
+}
+
+.discord-info {
+  display: flex;
+  align-items: center;
+  background: rgba(34, 34, 51, 0.6);
+  padding: 6px 12px;
+  border-radius: 8px;
+  box-shadow: 0 0 8px rgba(166, 108, 255, 0.3);
+}
+
+.discord-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px solid #a66cff;
+  margin-right: 10px;
+}
+
+.discord-username {
+  font-size: 13px;
+  color: #a66cff;
+  font-family: 'Orbitron', sans-serif;
+}
+
+/* === TOAST NOTIF === */
+.toast {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: rgba(30, 30, 50, 0.95);
+  color: #a66cff;
+  padding: 12px 20px;
+  border-radius: 8px;
+  box-shadow: 0 0 12px rgba(166, 108, 255, 0.5);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.5s ease, transform 0.5s ease;
+  transform: translateY(20px);
+  font-size: 14px;
+  z-index: 999;
+}
+
+.toast.show {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.verification-box {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(20, 20, 30, 0.95);
+  padding: 25px 40px;
+  border-radius: 12px;
+  box-shadow: 0 0 10px rgba(166, 108, 255, 0.3);
+  text-align: center;
+  z-index: 10000;
+  width: 400px;
+}
+
+.verification-title {
+  font-size: 18px;
+  color: #a66cff;
+  margin-bottom: 15px;
+}
+
+.progress-container {
+  margin-bottom: 10px;
+}
+
+.progress-bar-bg {
+  width: 100%;
+  height: 14px;
+  background: #1c1c2f;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: #a66cff;
+  width: 0%;
+  transition: width 0.2s ease-in-out;
+}
+
+.role-status {
+  margin-top: 10px;
+  font-size: 14px;
+  color: #ff5555;
+}
+
+/* === TOOLTIP JOUEURS CONNECTÉS === */
+.player-card {
+  position: relative;
+}
+
+.tooltip {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(20, 20, 30, 0.95);
+  color: #fff;
+  padding: 10px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: 'Orbitron', sans-serif;
+  white-space: pre-line;
+  width: 250px;
+  margin-top: 8px;
+  z-index: 100;
+  box-shadow: 0 0 8px rgba(166, 108, 255, 0.4);
+  text-align: center;
+}
+
+.player-card:hover .tooltip {
+  display: block;
+}
+
+.news-banner {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: linear-gradient(to right, #a66cff, #914ae6);
+  color: white;
+  font-weight: bold;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-family: 'Orbitron', sans-serif;
+  text-align: center;
+  z-index: 999;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.3);
+  animation: slideBannerUp 0.8s ease forwards;
+  transition: opacity 0.3s ease-in-out;
+  /* Transition douce à chaque changement */
+  opacity: 1;
+  /* par défaut visible */
+  pointer-events: none;
+  /* empêche les clics si tu veux un bandeau passif */
+}
+
+@keyframes slideBannerUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}

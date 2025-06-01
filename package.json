@@ -1,0 +1,61 @@
+{
+  "name": "DeadLand-RP-Launcher",
+  "author": "M4lwqre",
+  "version": "1.0.15",
+  "description": "Launcher officiel Deadland RP",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder",
+    "publish": "electron-builder --win --publish always"
+  },
+  "build": {
+    "appId": "com.deadland.launcher",
+    "productName": "Deadland RP Launcher",
+    "asar": true,
+    "files": [
+      "main.js",
+      "preload.js",
+      "renderer/**/*",
+      "style.css",
+      "index.html",
+      "icon.ico",
+      "custom-nsis.nsh",
+      "license.txt"
+    ],
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "M4lwqrex0",
+        "repo": "deadland-launcher",
+        "releaseType": "release"
+      }
+    ],
+    "win": {
+      "icon": "icon.ico",
+      "target": "nsis"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "include": "custom-nsis.nsh",
+      "license": "license.txt"
+    }
+  },
+  "devDependencies": {
+    "electron": "^27.0.0",
+    "electron-builder": "^24.13.1"
+  },
+  "dependencies": {
+    "dotenv": "^16.5.0",
+    "electron-updater": "^6.6.2",
+    "express": "^5.1.0",
+    "node-fetch": "^2.6.7",
+    "open": "^8.4.2",
+    "ping": "^0.4.2"
+  }
+}

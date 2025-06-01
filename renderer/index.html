@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+  <meta charset="UTF-8">
+  <title>DeadLand RP Launcher</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap" rel="stylesheet">
+</head>
+
+<body>
+  <!-- Barre de drag & bouton fermer -->
+  <div class="window-drag-bar"></div>
+  <div class="window-controls">
+    <button id="close-btn">✖</button>
+  </div>
+
+  <!-- Écran d’auth en overlay -->
+  <div id="auth-screen">
+    <p>Connexion Discord en cours...</p>
+  </div>
+
+  <div class="news-banner" id="news-banner">
+    🚨 Chargement des annonces...
+  </div>
+
+
+  <!-- Contenu principal -->
+  <div id="main-content" style="display: none;">
+    <h1 class="title">DEADLAND RP</h1>
+    <p class="subtitle">Lanceur Sécurisé</p>
+
+    <div class="stats">
+      <div class="card player-card" id="player-card">
+        <span>👥 Survivants</span>
+        <strong id="player-count">0/0</strong>
+        <div class="tooltip" id="player-tooltip">Chargement...</div>
+      </div>
+      <div class="card"><span>🟢 Statut</span><strong id="server-status" style="color:lime">Opérationnel</strong></div>
+      <div class="card"><span>📡 Latence</span><strong id="latency" style="color:lightgreen">--</strong></div>
+    </div>
+
+    <button class="launch-btn" onclick="start()">REJOINDRE LE SERVEUR</button>
+
+    <div class="links">
+      <a href="#" id="link-tebex">Boutique Tebex</a>
+      <a href="#" id="link-discord">Discord</a>
+      <a href="#" id="link-cache">Cache</a>
+    </div>
+  </div>
+
+  <div id="verification-box" class="verification-box" style="display:none;">
+    <p class="verification-title">VÉRIFICATION EN COURS</p>
+    <div class="progress-container">
+      <p id="verification-label">Analyse des logiciels malveillants...</p>
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" id="progress-bar" style="width: 0%;"></div>
+      </div>
+    </div>
+    <p id="role-status" class="role-status"></p>
+  </div>
+
+  <script src="renderer.js"></script>
+</body>
+
+</html>

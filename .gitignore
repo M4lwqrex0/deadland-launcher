@@ -1,0 +1,13 @@
+# Ignorer les dépendances
+node_modules/
+
+# Ignorer les builds
+dist/
+*.exe
+*.blockmap
+*.yml
+
+# Cache système
+.DS_Store
+Thumbs.db
+.env

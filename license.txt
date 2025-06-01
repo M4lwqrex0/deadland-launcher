@@ -1,0 +1,46 @@
+En installant et en utilisant le Launcher DeadLand RP, vous acceptez sans réserve les conditions suivantes :
+
+1. OBJET DU LAUNCHER
+Le Launcher DeadLand RP est une application dédiée au lancement sécurisé du serveur FiveM DeadLand RP.  
+Il sert également à fournir une protection active contre les outils malveillants ou non autorisés pouvant nuire à l’intégrité du serveur ou à l’expérience de jeu des autres utilisateurs.
+
+2. UTILISATION AUTORISÉE
+L’utilisateur s’engage à :
+- Utiliser le launcher uniquement pour accéder au serveur DeadLand RP.
+- Ne pas tenter de modifier, décompiler, désassembler ou rétroconcevoir l'application.
+- Ne pas contourner les systèmes de sécurité intégrés au launcher.
+
+3. DÉTECTION ANTITRICHE
+Le launcher intègre un système d’analyse automatisé permettant :
+- La détection de logiciels malveillants (type RedEngine, Process Hacker, CheatEngine...).
+- La détection de processus suspects en cours d’exécution.
+- La détection de toute tentative d’injection dans FiveM.
+
+En cas de détection d’un comportement suspect :
+- Le launcher peut être fermé automatiquement.
+- L'accès au serveur peut être bloqué temporairement ou définitivement.
+- Un signalement automatique peut être généré.
+
+4. COLLECTE DE DONNÉES
+Aucune donnée personnelle (nom, adresse, IP publique...) n’est stockée ni partagée.  
+Le système peut effectuer une **analyse temporaire et locale** de certains processus ou répertoires système **exclusivement à des fins de sécurité**.  
+Aucune information n’est transmise à des tiers.
+
+5. MISES À JOUR
+L’utilisateur accepte que le launcher se mette à jour automatiquement pour garantir sa compatibilité et l’efficacité du système de sécurité.
+
+6. RESPONSABILITÉ
+L’équipe DeadLand RP ne pourra être tenue responsable de tout dysfonctionnement lié à l'utilisation du launcher dans un environnement non sécurisé, modifié ou non conforme aux recommandations.
+
+7. NON-RESPECT DES CONDITIONS
+Tout non-respect des présentes conditions pourra entraîner :
+- Un **blocage de l’accès au serveur** DeadLand RP
+- Une **exclusion temporaire ou définitive**
+- L’ouverture d’une procédure de sanction sur Discord ou InGame
+
+8. ACCEPTATION
+L’installation et l’utilisation du launcher impliquent **l’acceptation pleine et entière** de ces conditions.
+
+—————————————————————————————
+DEADLAND RP | © M4lwqre - Tous droits réservés
+—————————————————————————————

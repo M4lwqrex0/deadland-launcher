@@ -1,0 +1,468 @@
+require('dotenv').config();
+
+const { app, BrowserWindow, ipcMain } = require("electron");
+const { autoUpdater } = require("electron-updater");
+const path = require('path');
+const { exec } = require('child_process');
+const ping = require('ping');
+const fs = require('fs');
+const fsPromises = require('fs/promises');
+const express = require('express');
+const http = require('http');
+const open = require('open');
+const fetch = require('node-fetch');
+
+
+const clientId = process.env.DISCORD_CLIENT_ID;
+const clientSecret = process.env.DISCORD_CLIENT_SECRET;
+const redirectUri = process.env.DISCORD_REDIRECT_URI;
+const guildId = process.env.DISCORD_GUILD_ID;
+const requiredRoleId = process.env.DISCORD_REQUIRED_ROLE_ID;
+const botToken = process.env.DISCORD_BOT_TOKEN;
+const userDataPath = path.join(app.getPath("userData"), 'user.json');
+
+
+let mainWindow;
+
+function closeFiveMIfRunning() {
+  const isWin = process.platform === 'win32';
+  const cmd = isWin ? 'tasklist' : 'ps aux';
+
+  exec(cmd, (err, stdout) => {
+    if (err) return console.error("Erreur détection processus:", err);
+
+    const isFiveMRunning = stdout.toLowerCase().includes('fivem.exe');
+    if (isFiveMRunning) {
+      console.log("🛑 FiveM détecté. Fermeture en cours...");
+      exec('taskkill /F /IM FiveM.exe', (killErr) => {
+        if (killErr) return console.error("Erreur fermeture FiveM:", killErr);
+        console.log("✅ FiveM fermé avec succès.");
+        if (mainWindow) {
+          mainWindow.webContents.send('fivem-closed'); // ✅ toast côté renderer
+        }
+      });
+    } else {
+      console.log("✅ Aucun processus FiveM actif.");
+    }
+  });
+}
+
+
+function createWindow() {
+  mainWindow = new BrowserWindow({
+    width: 900,
+    height: 600,
+    frame: false,
+    resizable: false,
+    icon: path.join(__dirname, 'icon.ico'),
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js')
+    }
+  });
+  mainWindow.loadFile('./renderer/index.html');
+}
+
+async function checkAuth() {
+  if (fs.existsSync(userDataPath)) {
+    const user = JSON.parse(fs.readFileSync(userDataPath, 'utf-8'));
+
+    try {
+      // Vérifie discrètement si l'utilisateur a toujours le rôle requis
+      const memberRes = await fetch(`https://discord.com/api/v10/guilds/${guildId}/members/${user.id}`, {
+        headers: {
+          Authorization: `Bot ${botToken}`
+        }
+      });
+
+
+      if (!memberRes.ok) throw new Error("Impossible de vérifier les rôles via l'API Bot.");
+
+      const member = await memberRes.json();
+
+      if (!member.roles || !member.roles.includes(requiredRoleId)) {
+        console.warn(`⛔️ Rôle requis manquant pour ${user.username}. Accès limité.`);
+
+        if (mainWindow) {
+          mainWindow.webContents.once('did-finish-load', () => {
+            mainWindow.webContents.send('role-missing', user.username);
+          });
+        }
+
+        return;
+      }
+
+      // Rôle valide → on initialise l'app
+      if (mainWindow) {
+        mainWindow.webContents.once('did-finish-load', () => {
+          mainWindow.webContents.send('auth-success', user);
+        });
+      }
+
+    } catch (err) {
+      console.error("Erreur de vérification du rôle Discord :", err);
+    }
+
+    return;
+  }
+
+  // Aucune session → démarrer OAuth2
+  const authUrl = `https://discord.com/api/oauth2/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=identify%20guilds.members.read`;
+  const expressApp = express();
+  const server = http.createServer(expressApp);
+
+  expressApp.get('/callback', async (req, res) => {
+    const code = req.query.code;
+    try {
+      const tokenRes = await fetch('https://discord.com/api/oauth2/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          client_id: clientId,
+          client_secret: clientSecret,
+          grant_type: 'authorization_code',
+          code,
+          redirect_uri: redirectUri
+        })
+      });
+
+      const token = await tokenRes.json();
+
+      const userRes = await fetch('https://discord.com/api/users/@me', {
+        headers: { Authorization: `Bearer ${token.access_token}` }
+      });
+      const user = await userRes.json();
+
+      const memberRes = await fetch(`https://discord.com/api/users/@me/guilds/${guildId}/member`, {
+        headers: { Authorization: `Bearer ${token.access_token}` }
+      });
+      const member = await memberRes.json();
+
+      if (!member.roles || !member.roles.includes(requiredRoleId)) {
+        res.send(`
+  <html>
+    <head>
+      <style>
+        body {
+          background: #0e0e15;
+          font-family: 'Orbitron', sans-serif;
+          color: #ff4f4f;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          height: 100vh;
+          margin: 0;
+          flex-direction: column;
+        }
+        h2 {
+          color: #ff4f4f;
+          font-size: 22px;
+        }
+        .icon {
+          font-size: 48px;
+          margin-bottom: 15px;
+        }
+      </style>
+      <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap" rel="stylesheet">
+      <script>
+        setTimeout(() => window.close(), 8000);
+      </script>
+    </head>
+    <body>
+      <div class="icon">🚫</div>
+      <h2>Accès refusé : rôle Discord requis manquant.</h2>
+    </body>
+  </html>
+`);
+        return server.close();
+      }
+
+      fs.writeFileSync(userDataPath, JSON.stringify(user, null, 2));
+      console.log("✅ Authentification réussie :", user.username);
+
+      if (mainWindow) {
+        mainWindow.webContents.send('auth-success', user);
+      }
+
+      res.send(`
+  <html>
+    <head>
+      <style>
+        body {
+          background: #0e0e15;
+          font-family: 'Orbitron', sans-serif;
+          color: #a66cff;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          height: 100vh;
+          margin: 0;
+          flex-direction: column;
+        }
+        h2 {
+          color: #00ff8c;
+          font-size: 22px;
+        }
+        .icon {
+          font-size: 48px;
+          margin-bottom: 15px;
+        }
+      </style>
+      <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap" rel="stylesheet">
+      <script>
+        setTimeout(() => window.close(), 6000);
+      </script>
+    </head>
+    <body>
+      <div class="icon">✅</div>
+      <h2>Connexion réussie ! Tu peux retourner sur le launcher.</h2>
+    </body>
+  </html>
+`);
+      server.close();
+
+    } catch (err) {
+      console.error("❌ Erreur OAuth2:", err);
+      res.send(`
+  <html>
+    <head>
+      <style>
+        body {
+          background: #0e0e15;
+          font-family: 'Orbitron', sans-serif;
+          color: #ff4f4f;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          height: 100vh;
+          margin: 0;
+          flex-direction: column;
+        }
+        h2 {
+          color: #ff4f4f;
+          font-size: 22px;
+        }
+        .icon {
+          font-size: 48px;
+          margin-bottom: 15px;
+        }
+      </style>
+      <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap" rel="stylesheet">
+      <script>
+        setTimeout(() => window.close(), 8000);
+      </script>
+    </head>
+    <body>
+      <div class="icon">🚫</div>
+      <h2>Accès refusé : rôle Discord requis manquant.</h2>
+    </body>
+  </html>
+`);
+    }
+  });
+
+  server.listen(4567, () => {
+    console.log("[AUTH] Serveur OAuth prêt sur http://localhost:4567");
+    open(authUrl).catch(err => console.error("❌ Erreur ouverture navigateur :", err));
+  });
+}
+
+ipcMain.handle('check-role', async () => {
+  if (!fs.existsSync(userDataPath)) return { allowed: false };
+
+  const user = JSON.parse(fs.readFileSync(userDataPath, 'utf-8'));
+  try {
+    const memberRes = await fetch(`https://discord.com/api/v10/guilds/${guildId}/members/${user.id}`, {
+      headers: {
+        Authorization: `Bot ${botToken}` // ✅ Ici c'était encore TON_BOT_TOKEN, corrigé
+      }
+    });
+
+    const member = await memberRes.json();
+    const hasRole = member.roles.includes(requiredRoleId);
+
+    return { allowed: hasRole };
+  } catch (err) {
+    console.error("Erreur vérification rôle :", err);
+    return { allowed: false };
+  }
+});
+
+
+
+
+ipcMain.handle('get-user', async () => {
+  if (fs.existsSync(userDataPath)) {
+    return JSON.parse(fs.readFileSync(userDataPath, 'utf-8'));
+  }
+  return null;
+});
+
+ipcMain.handle('launch-game', async () => {
+  exec(`explorer "fivem://connect/45.95.113.47:30230"`);
+  return { success: true };
+});
+
+ipcMain.handle('get-server-info', async () => {
+  try {
+    const baseUrl = 'http://45.95.113.47:30230';
+    const [infoRes, playersRes] = await Promise.all([
+      fetch(`${baseUrl}/info.json`),
+      fetch(`${baseUrl}/players.json`)
+    ]);
+
+    if (!infoRes.ok || !playersRes.ok) throw new Error("Serveur injoignable");
+
+    const info = await infoRes.json();
+    const players = await playersRes.json();
+
+    return {
+      online: true,
+      players: players.length,
+      playersList: players, // 👈 Liste complète des joueurs ajoutée ici
+      maxPlayers: parseInt(info.vars.sv_maxClients),
+      hostname: info.vars.sv_hostname
+    };
+  } catch (err) {
+    console.error("Erreur get-server-info:", err);
+    return {
+      online: false,
+      players: 0,
+      playersList: [], // 👈 Retourne une liste vide si erreur
+      maxPlayers: 0,
+      hostname: "Indisponible"
+    };
+  }
+});
+
+ipcMain.handle('get-latency', async () => {
+  try {
+    const result = await ping.promise.probe('45.95.113.47');
+    return result.alive ? Math.round(result.time) : null;
+  } catch (err) {
+    console.error("Erreur ping:", err);
+    return null;
+  }
+});
+
+ipcMain.on('open-external', (event, url) => {
+  shell.openExternal(url);
+});
+
+ipcMain.handle('clear-fivem-cache', async () => {
+  try {
+    const cachePath = path.join(process.env.LOCALAPPDATA, 'FiveM', 'FiveM.app', 'data');
+    if (!fs.existsSync(cachePath)) return { success: false, error: "Dossier introuvable." };
+
+    const entries = await fsPromises.readdir(cachePath, { withFileTypes: true });
+    for (const entry of entries) {
+      if (entry.name !== 'game-storage') {
+        const fullPath = path.join(cachePath, entry.name);
+        if (entry.isDirectory()) {
+          await fsPromises.rm(fullPath, { recursive: true, force: true });
+        } else {
+          await fsPromises.unlink(fullPath);
+        }
+      }
+    }
+
+    return { success: true };
+  } catch (err) {
+    console.error("Erreur suppression cache:", err);
+    return { success: false, error: err.message };
+  }
+});
+
+const forbiddenTools = [
+  "RedEngine", "ProcessHacker", "Process Hacker", "Cheat Engine",
+  "Susano", "TZ", "Keyser", "Extreme Injector", "GH Injector",
+  "DLL Injector", "xenos64", "injector", "exploit"
+];
+
+ipcMain.handle("scan-for-cheats", async () => {
+  try {
+    const scanDirs = [
+      path.join(process.env.PROGRAMFILES),
+      path.join(process.env["PROGRAMFILES(X86)"]),
+      path.join(process.env.LOCALAPPDATA),
+      path.join(process.env.APPDATA)
+    ];
+
+    console.log("🔍 Début du scan de logiciels interdits...");
+
+    for (const dir of scanDirs) {
+      if (!fs.existsSync(dir)) {
+        console.log(`📁 Dossier introuvable (ignoré) : ${dir}`);
+        continue;
+      }
+
+      console.log(`📂 Analyse du dossier : ${dir}`);
+
+      const entries = await fsPromises.readdir(dir, { withFileTypes: true });
+
+      for (const entry of entries) {
+        const entryName = entry.name.toLowerCase();
+
+        for (const keyword of forbiddenTools) {
+          const keywordLower = keyword.toLowerCase();
+
+          if (entryName.includes(keywordLower)) {
+            const fullPath = path.join(dir, entry.name);
+            console.log(`🚫 Détection : "${entry.name}" correspond au mot-clé "${keyword}"`);
+            console.log(`📌 Chemin complet : ${fullPath}`);
+
+            return {
+              success: false,
+              message: `Logiciel interdit détecté : ${entry.name}`
+            };
+          }
+        }
+      }
+    }
+
+    console.log("✅ Aucun logiciel interdit détecté.");
+    return { success: true };
+
+  } catch (err) {
+    console.error("❌ Erreur durant le scan de logiciels malveillants :", err);
+    return { success: false, message: "Erreur pendant le scan." };
+  }
+});
+
+
+app.whenReady().then(() => {
+  createWindow();
+  autoUpdater.setFeedURL({
+    provider: 'github',
+    owner: 'M4lwqrex0',
+    repo: 'deadland-launcher'
+  });
+
+  // 🔁 Check update au démarrage
+  autoUpdater.checkForUpdatesAndNotify();
+
+  // ✅ Fermeture de FiveM si déjà lancé
+  setTimeout(() => closeFiveMIfRunning(), 800);
+
+  // ✅ Auth Discord
+  checkAuth();
+});
+
+// === 🎯 Notification personnalisée de mise à jour ===
+autoUpdater.on('update-available', () => {
+  if (mainWindow) {
+    mainWindow.webContents.send('update-available');
+  }
+});
+
+autoUpdater.on('download-progress', (progressObj) => {
+  if (mainWindow) {
+    mainWindow.webContents.send('update-progress', progressObj.percent);
+  }
+});
+
+autoUpdater.on('update-downloaded', () => {
+  if (mainWindow) {
+    mainWindow.webContents.send('update-downloaded');
+  }
+});
+
