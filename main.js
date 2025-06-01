@@ -1,4 +1,6 @@
 require('dotenv').config();
+console.log("🔧 ENV Loaded — BotToken:", process.env.DISCORD_BOT_TOKEN ? "✅" : "❌ MISSING");
+
 
 const { app, BrowserWindow, ipcMain } = require("electron");
 const { autoUpdater } = require("electron-updater");
@@ -63,24 +65,26 @@ function createWindow() {
 }
 
 async function checkAuth() {
+  if (!botToken || !guildId || !requiredRoleId) {
+    console.error("❌ Variables d’environnement manquantes (BOT_TOKEN, GUILD_ID ou ROLE_ID).");
+    return;
+  }
+
+  // === SESSION EXISTANTE ===
   if (fs.existsSync(userDataPath)) {
     const user = JSON.parse(fs.readFileSync(userDataPath, 'utf-8'));
 
     try {
-      // Vérifie discrètement si l'utilisateur a toujours le rôle requis
       const memberRes = await fetch(`https://discord.com/api/v10/guilds/${guildId}/members/${user.id}`, {
-        headers: {
-          Authorization: `Bot ${botToken}`
-        }
+        headers: { Authorization: `Bot ${botToken}` }
       });
 
-
-      if (!memberRes.ok) throw new Error("Impossible de vérifier les rôles via l'API Bot.");
+      if (!memberRes.ok) throw new Error(`Discord API error (${memberRes.status})`);
 
       const member = await memberRes.json();
 
-      if (!member.roles || !member.roles.includes(requiredRoleId)) {
-        console.warn(`⛔️ Rôle requis manquant pour ${user.username}. Accès limité.`);
+      if (!member || !Array.isArray(member.roles) || !member.roles.includes(requiredRoleId)) {
+        console.warn(`⛔ Rôle requis manquant pour ${user.username}`);
 
         if (mainWindow) {
           mainWindow.webContents.once('did-finish-load', () => {
@@ -91,7 +95,8 @@ async function checkAuth() {
         return;
       }
 
-      // Rôle valide → on initialise l'app
+      console.log(`✅ ${user.username} possède le rôle requis.`);
+
       if (mainWindow) {
         mainWindow.webContents.once('did-finish-load', () => {
           mainWindow.webContents.send('auth-success', user);
@@ -99,7 +104,7 @@ async function checkAuth() {
       }
 
     } catch (err) {
-      console.error("Erreur de vérification du rôle Discord :", err);
+      console.error("💥 Erreur lors de la vérification du rôle :", err.message);
     }
 
     return;
