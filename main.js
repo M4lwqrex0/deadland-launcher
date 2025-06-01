@@ -1,17 +1,19 @@
-const { app, BrowserWindow, ipcMain, shell } = require("electron"); // shell oublié mais utilisé
+const { app, BrowserWindow, ipcMain, shell } = require("electron");
 const path = require("path");
 const fs = require("fs");
 const dotenv = require("dotenv");
 
-// === 🔐 Chargement sécurisé du .env (fonctionne même packagé) ===
-const envPath = path.join(app.getAppPath(), ".env");
+// === 🔐 Chargement sécurisé du .env (fonctionne dans une app packagée avec extraFiles) ===
+const envPath = path.join(process.resourcesPath, ".env");
+
 if (fs.existsSync(envPath)) {
   dotenv.config({ path: envPath });
+  console.log("✅ Fichier .env chargé depuis :", envPath);
 } else {
   console.error("❌ Fichier .env introuvable :", envPath);
 }
 
-// === ✅ Vérification des variables requises ===
+// === ✅ Vérification des variables d'environnement requises ===
 const requiredEnvVars = [
   "DISCORD_CLIENT_ID",
   "DISCORD_CLIENT_SECRET",
@@ -22,12 +24,13 @@ const requiredEnvVars = [
 ];
 
 const missingVars = requiredEnvVars.filter((key) => !process.env[key]);
+
 if (missingVars.length > 0) {
   console.error("❌ Variables d’environnement manquantes :", missingVars.join(", "));
-  app.quit(); // arrêt immédiat
+  app.quit(); // Blocage immédiat de l'app
 }
 
-// === 🧪 DEBUG LOG ENV ===
+// === 🧪 DEBUG ENV ===
 console.log("🔧 ENV Loaded — BotToken:", process.env.DISCORD_BOT_TOKEN ? "✅" : "❌ MISSING");
 console.log("CLIENT_ID:", process.env.DISCORD_CLIENT_ID ? "✅" : "❌ MISSING");
 console.log("GUILD_ID:", process.env.DISCORD_GUILD_ID ? "✅" : "❌ MISSING");
@@ -43,7 +46,7 @@ const http = require("http");
 const open = require("open");
 const fetch = require("node-fetch");
 
-// === 🌐 Variables d’environnement ===
+// === 🌐 Variables d’environnement (sécurisées car validées plus haut) ===
 const clientId = process.env.DISCORD_CLIENT_ID;
 const clientSecret = process.env.DISCORD_CLIENT_SECRET;
 const redirectUri = process.env.DISCORD_REDIRECT_URI;
@@ -53,6 +56,7 @@ const botToken = process.env.DISCORD_BOT_TOKEN;
 
 // === 📁 Dossier session utilisateur ===
 const userDataPath = path.join(app.getPath("userData"), "user.json");
+
 
 
 
