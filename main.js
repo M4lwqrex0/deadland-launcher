@@ -1,13 +1,17 @@
-const path = require('path'); // ← IMPORTANT : à placer en haut, AVANT dotenv
-require('dotenv').config({ path: path.join(__dirname, '.env') });
+const { app, BrowserWindow, ipcMain } = require("electron"); // Nécessaire avant getAppPath()
+const path = require('path');
 
+// Lecture fiable du .env même dans app.asar
+const envPath = path.join(app.getAppPath(), '.env');
+require('dotenv').config({ path: envPath });
+
+// DEBUG ENV
 console.log("🔧 ENV Loaded — BotToken:", process.env.DISCORD_BOT_TOKEN ? "✅" : "❌ MISSING");
 console.log("CLIENT_ID:", process.env.DISCORD_CLIENT_ID ? "✅" : "❌ MISSING");
 console.log("GUILD_ID:", process.env.DISCORD_GUILD_ID ? "✅" : "❌ MISSING");
 console.log("REQUIRED_ROLE_ID:", process.env.DISCORD_REQUIRED_ROLE_ID ? "✅" : "❌ MISSING");
 
-// ensuite tous tes autres require :
-const { app, BrowserWindow, ipcMain } = require("electron");
+// Autres modules
 const { autoUpdater } = require("electron-updater");
 const { exec } = require('child_process');
 const ping = require('ping');
@@ -18,14 +22,17 @@ const http = require('http');
 const open = require('open');
 const fetch = require('node-fetch');
 
-
+// Variables d'environnement
 const clientId = process.env.DISCORD_CLIENT_ID;
 const clientSecret = process.env.DISCORD_CLIENT_SECRET;
 const redirectUri = process.env.DISCORD_REDIRECT_URI;
 const guildId = process.env.DISCORD_GUILD_ID;
 const requiredRoleId = process.env.DISCORD_REQUIRED_ROLE_ID;
 const botToken = process.env.DISCORD_BOT_TOKEN;
+
+// Path user
 const userDataPath = path.join(app.getPath("userData"), 'user.json');
+
 
 
 let mainWindow;
