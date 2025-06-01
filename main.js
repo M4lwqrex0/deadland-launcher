@@ -1,13 +1,14 @@
+const path = require('path'); // ← IMPORTANT : à placer en haut, AVANT dotenv
 require('dotenv').config({ path: path.join(__dirname, '.env') });
+
 console.log("🔧 ENV Loaded — BotToken:", process.env.DISCORD_BOT_TOKEN ? "✅" : "❌ MISSING");
 console.log("CLIENT_ID:", process.env.DISCORD_CLIENT_ID ? "✅" : "❌ MISSING");
 console.log("GUILD_ID:", process.env.DISCORD_GUILD_ID ? "✅" : "❌ MISSING");
 console.log("REQUIRED_ROLE_ID:", process.env.DISCORD_REQUIRED_ROLE_ID ? "✅" : "❌ MISSING");
 
-
+// ensuite tous tes autres require :
 const { app, BrowserWindow, ipcMain } = require("electron");
 const { autoUpdater } = require("electron-updater");
-const path = require('path');
 const { exec } = require('child_process');
 const ping = require('ping');
 const fs = require('fs');
