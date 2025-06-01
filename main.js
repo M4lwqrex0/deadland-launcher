@@ -1,28 +1,49 @@
-const { app, BrowserWindow, ipcMain } = require("electron"); // Nécessaire avant getAppPath()
-const path = require('path');
+const { app, BrowserWindow, ipcMain, shell } = require("electron"); // shell oublié mais utilisé
+const path = require("path");
+const fs = require("fs");
+const dotenv = require("dotenv");
 
-// Lecture fiable du .env même dans app.asar
-const envPath = path.join(app.getAppPath(), '.env');
-require('dotenv').config({ path: envPath });
+// === 🔐 Chargement sécurisé du .env (fonctionne même packagé) ===
+const envPath = path.join(app.getAppPath(), ".env");
+if (fs.existsSync(envPath)) {
+  dotenv.config({ path: envPath });
+} else {
+  console.error("❌ Fichier .env introuvable :", envPath);
+}
 
-// DEBUG ENV
+// === ✅ Vérification des variables requises ===
+const requiredEnvVars = [
+  "DISCORD_CLIENT_ID",
+  "DISCORD_CLIENT_SECRET",
+  "DISCORD_REDIRECT_URI",
+  "DISCORD_GUILD_ID",
+  "DISCORD_REQUIRED_ROLE_ID",
+  "DISCORD_BOT_TOKEN"
+];
+
+const missingVars = requiredEnvVars.filter((key) => !process.env[key]);
+if (missingVars.length > 0) {
+  console.error("❌ Variables d’environnement manquantes :", missingVars.join(", "));
+  app.quit(); // arrêt immédiat
+}
+
+// === 🧪 DEBUG LOG ENV ===
 console.log("🔧 ENV Loaded — BotToken:", process.env.DISCORD_BOT_TOKEN ? "✅" : "❌ MISSING");
 console.log("CLIENT_ID:", process.env.DISCORD_CLIENT_ID ? "✅" : "❌ MISSING");
 console.log("GUILD_ID:", process.env.DISCORD_GUILD_ID ? "✅" : "❌ MISSING");
 console.log("REQUIRED_ROLE_ID:", process.env.DISCORD_REQUIRED_ROLE_ID ? "✅" : "❌ MISSING");
 
-// Autres modules
+// === 📦 Modules externes ===
 const { autoUpdater } = require("electron-updater");
-const { exec } = require('child_process');
-const ping = require('ping');
-const fs = require('fs');
-const fsPromises = require('fs/promises');
-const express = require('express');
-const http = require('http');
-const open = require('open');
-const fetch = require('node-fetch');
+const { exec } = require("child_process");
+const ping = require("ping");
+const fsPromises = require("fs/promises");
+const express = require("express");
+const http = require("http");
+const open = require("open");
+const fetch = require("node-fetch");
 
-// Variables d'environnement
+// === 🌐 Variables d’environnement ===
 const clientId = process.env.DISCORD_CLIENT_ID;
 const clientSecret = process.env.DISCORD_CLIENT_SECRET;
 const redirectUri = process.env.DISCORD_REDIRECT_URI;
@@ -30,8 +51,9 @@ const guildId = process.env.DISCORD_GUILD_ID;
 const requiredRoleId = process.env.DISCORD_REQUIRED_ROLE_ID;
 const botToken = process.env.DISCORD_BOT_TOKEN;
 
-// Path user
-const userDataPath = path.join(app.getPath("userData"), 'user.json');
+// === 📁 Dossier session utilisateur ===
+const userDataPath = path.join(app.getPath("userData"), "user.json");
+
 
 
 
@@ -446,24 +468,66 @@ ipcMain.handle("scan-for-cheats", async () => {
 
 
 app.whenReady().then(() => {
+  // Vérifie si l'environnement est complet
+  const requiredVars = [
+    "DISCORD_CLIENT_ID",
+    "DISCORD_CLIENT_SECRET",
+    "DISCORD_REDIRECT_URI",
+    "DISCORD_GUILD_ID",
+    "DISCORD_REQUIRED_ROLE_ID",
+    "DISCORD_BOT_TOKEN"
+  ];
+
+  const missing = requiredVars.filter((v) => !process.env[v]);
+
+  if (missing.length > 0) {
+    const errorMsg = `Certaines variables .env sont manquantes :\n\n${missing.join('\n')}`;
+
+    // Affiche une fenêtre d'erreur utilisateur
+    const errorWin = new BrowserWindow({
+      width: 500,
+      height: 250,
+      title: "Erreur de configuration",
+      resizable: false,
+      minimizable: false,
+      maximizable: false,
+      closable: true,
+      alwaysOnTop: true,
+      backgroundColor: "#1e1e1e",
+      webPreferences: { nodeIntegration: true }
+    });
+
+    errorWin.loadURL(`data:text/html,
+      <html>
+        <body style="background:#1e1e1e;color:white;font-family:sans-serif;display:flex;flex-direction:column;justify-content:center;align-items:center;height:100vh;">
+          <h2>❌ Erreur .env</h2>
+          <p style="white-space:pre;text-align:center;">${errorMsg}</p>
+        </body>
+      </html>`);
+
+    return;
+  }
+
+  // ✅ Démarrage normal
   createWindow();
+
   autoUpdater.setFeedURL({
     provider: 'github',
     owner: 'M4lwqrex0',
     repo: 'deadland-launcher'
   });
 
-  // 🔁 Check update au démarrage
+  // 🔁 Vérifie les mises à jour
   autoUpdater.checkForUpdatesAndNotify();
 
-  // ✅ Fermeture de FiveM si déjà lancé
+  // 🛑 Ferme FiveM s'il est déjà ouvert
   setTimeout(() => closeFiveMIfRunning(), 800);
 
-  // ✅ Auth Discord
+  // 🔐 Lance l'authentification Discord
   checkAuth();
 });
 
-// === 🎯 Notification personnalisée de mise à jour ===
+// === 🎯 Notifications de mise à jour ===
 autoUpdater.on('update-available', () => {
   if (mainWindow) {
     mainWindow.webContents.send('update-available');
