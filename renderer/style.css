@@ -319,10 +319,8 @@ input {
 }
 
 .launcher-version {
-  position: absolute;
-  right: 10px;
-  bottom: 5px;
+  color: #aaa;
   font-size: 12px;
-  color: #888;
+  margin-top: 4px;
   font-family: 'Orbitron', sans-serif;
 }
