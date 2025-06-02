@@ -2,7 +2,6 @@ document.getElementById("close-btn").addEventListener("click", () => {
   window.close();
 });
 
-// === Toast notification ===
 function showToast(message) {
   const sound = new Audio('renderer/cache-success.mp3');
   sound.volume = 0.3;
@@ -20,7 +19,6 @@ function showToast(message) {
   }, 3000);
 }
 
-// === Mise à jour statut serveur ===
 async function updateServerStatus() {
   const serverInfo = await window.electronAPI.getServerInfo();
   document.getElementById('player-count').textContent = `${serverInfo.players}/${serverInfo.maxPlayers}`;
@@ -32,7 +30,6 @@ async function updateServerStatus() {
     : "😴 Aucun joueur actuellement connecté...\nMais connecte-toi, le monde attire le monde !";
 }
 
-// === Latence ===
 async function updateLatency() {
   const latency = await window.electronAPI.getLatency();
   const display = document.getElementById('latency');
@@ -45,7 +42,6 @@ async function updateLatency() {
   }
 }
 
-// === Initialisation après login ===
 function initApp(user) {
   document.getElementById("auth-screen").style.display = "none";
   document.getElementById("main-content").style.display = "block";
@@ -79,7 +75,6 @@ function initApp(user) {
 
   const launchButton = document.querySelector(".launch-btn");
 
-  // Vérification initiale du rôle
   window.electronAPI.checkRoleValid().then(res => {
     if (!res.allowed) {
       launchButton.disabled = true;
@@ -89,7 +84,6 @@ function initApp(user) {
     }
   });
 
-  // Vérification périodique du rôle
   setInterval(async () => {
     const res = await window.electronAPI.checkRoleValid();
     if (!res.allowed && !launchButton.disabled) {
@@ -108,11 +102,10 @@ function initApp(user) {
   }, 15000);
 }
 
-// === Authentification utilisateur ===
 window.electronAPI.getUser().then(user => {
   if (user) {
     initApp(user);
-    checkAndHandleUpdate(); // ← ici aussi
+    checkAndHandleUpdate();
   } else {
     document.getElementById("auth-screen").innerHTML = "<p>Connexion Discord requise pour utiliser le launcher...</p>";
   }
@@ -121,11 +114,9 @@ window.electronAPI.getUser().then(user => {
 window.electronAPI.onAuthSuccess((event, user) => {
   console.log("[RENDERER] Connexion Discord validée :", user.username);
   initApp(user);
-  checkAndHandleUpdate(); // <-- ici
+  checkAndHandleUpdate();
 });
 
-
-// === Liens externes ===
 document.getElementById("link-tebex").addEventListener("click", () => {
   window.electronAPI.openExternal("https://deadland-rp.tebex.io");
 });
@@ -139,13 +130,11 @@ document.getElementById("link-cache").addEventListener("click", async () => {
     : showToast("❌ Erreur lors de la suppression : " + result.error);
 });
 
-// === Rôle retiré en live ===
 window.electronAPI.onRoleMissing?.((event, username) => {
   showToast(`⚠️ ${username}, ton rôle Discord a été retiré. Accès désactivé.`);
   document.querySelector(".launch-btn").disabled = true;
 });
 
-// === Lancement du jeu ===
 async function start() {
   const box = document.getElementById("verification-box");
   const progress = document.getElementById("progress-bar");
@@ -157,7 +146,6 @@ async function start() {
   progress.style.width = "0%";
   label.textContent = "Analyse système...";
 
-  // Scan anti-triche (40% → 60%)
   for (let i = 40; i <= 60; i++) {
     progress.style.width = `${i}%`;
     await new Promise(r => setTimeout(r, 15));
@@ -176,7 +164,6 @@ async function start() {
     return;
   }
 
-  // Finalisation (61% → 100%)
   label.textContent = "Aucune anomalie détectée. Lancement...";
   for (let i = 61; i <= 100; i++) {
     progress.style.width = `${i}%`;
@@ -188,8 +175,6 @@ async function start() {
 }
 
 
-
-// === Bannière d’infos ===
 const newsMessages = [
   "🚨 Mise à jour : Aucune",
   "🎉 Événement RP : Aucun !",
@@ -223,12 +208,10 @@ async function checkAndHandleUpdate() {
   const progress = document.getElementById("progress-bar");
   const label = document.getElementById("verification-label");
 
-  // UI ready
   box.style.display = "block";
   progress.style.width = "0%";
   label.textContent = "Vérification des mises à jour...";
 
-  // Branche AVANT
   window.electronAPI.onUpdateProgress((_, percent) => {
     progress.style.width = `${percent}%`;
     label.textContent = `Téléchargement : ${Math.floor(percent)}%`;
@@ -237,7 +220,7 @@ async function checkAndHandleUpdate() {
   window.electronAPI.onUpdateDownloaded(() => {
     label.textContent = "✅ Mise à jour téléchargée. Redémarrage...";
     setTimeout(() => {
-      window.electronAPI.installUpdateNow(); // 🔁 relance automatique
+      window.electronAPI.installUpdateNow();
     }, 2000);
   });
 

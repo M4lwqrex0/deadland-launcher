@@ -4,7 +4,6 @@ const fs = require("fs");
 const crypto = require("crypto");
 const dotenv = require("dotenv");
 
-// === 🔐 Chargement sécurisé du .env (chiffré en .env.enc) ===
 function decryptAndLoadEnv() {
   const basePath = process.env.NODE_ENV === "development" ? __dirname : process.resourcesPath;
   const envEncPath = path.join(basePath, ".env.enc");
@@ -22,8 +21,8 @@ function decryptAndLoadEnv() {
 
   try {
     const keyHex = fs.readFileSync(envKeyPath, "utf-8").trim();
-    const key = Buffer.from(keyHex, "hex"); // ← Clé hex vers buffer (32 octets pour AES-256)
-    const iv = Buffer.alloc(16, 0); // IV statique (pour simplicité, changeable)
+    const key = Buffer.from(keyHex, "hex");
+    const iv = Buffer.alloc(16, 0);
 
     const encrypted = fs.readFileSync(envEncPath);
     const decipher = crypto.createDecipheriv("aes-256-cbc", key, iv);
@@ -31,7 +30,6 @@ function decryptAndLoadEnv() {
     let decrypted = decipher.update(encrypted);
     decrypted = Buffer.concat([decrypted, decipher.final()]);
 
-    // Parse directement sans écrire un .env temporaire
     const parsed = dotenv.parse(decrypted);
     for (const k in parsed) {
       process.env[k] = parsed[k];
@@ -50,7 +48,6 @@ if (!decryptAndLoadEnv()) {
   app.quit();
 }
 
-// === ✅ Vérification des variables d'environnement requises ===
 const requiredEnvVars = [
   "DISCORD_CLIENT_ID",
   "DISCORD_CLIENT_SECRET",
@@ -67,13 +64,11 @@ if (missingVars.length > 0) {
   app.quit();
 }
 
-// === 🧪 DEBUG ENV ===
 console.log("🔧 ENV Loaded — BotToken:", process.env.DISCORD_BOT_TOKEN ? "✅" : "❌ MISSING");
 console.log("CLIENT_ID:", process.env.DISCORD_CLIENT_ID ? "✅" : "❌ MISSING");
 console.log("GUILD_ID:", process.env.DISCORD_GUILD_ID ? "✅" : "❌ MISSING");
 console.log("REQUIRED_ROLE_ID:", process.env.DISCORD_REQUIRED_ROLE_ID ? "✅" : "❌ MISSING");
 
-// === 📦 Modules externes ===
 const { autoUpdater } = require("electron-updater");
 const { exec } = require("child_process");
 const ping = require("ping");
@@ -83,7 +78,6 @@ const http = require("http");
 const open = require("open");
 const fetch = require("node-fetch");
 
-// === 🌐 Variables d’environnement ===
 const clientId = process.env.DISCORD_CLIENT_ID;
 const clientSecret = process.env.DISCORD_CLIENT_SECRET;
 const redirectUri = process.env.DISCORD_REDIRECT_URI;
@@ -91,7 +85,6 @@ const guildId = process.env.DISCORD_GUILD_ID;
 const requiredRoleId = process.env.DISCORD_REQUIRED_ROLE_ID;
 const botToken = process.env.DISCORD_BOT_TOKEN;
 
-// === 📁 Dossier session utilisateur ===
 const userDataPath = path.join(app.getPath("userData"), "user.json");
 
 
@@ -112,7 +105,7 @@ function closeFiveMIfRunning() {
         if (killErr) return console.error("Erreur fermeture FiveM:", killErr);
         console.log("✅ FiveM fermé avec succès.");
         if (mainWindow) {
-          mainWindow.webContents.send('fivem-closed'); // ✅ toast côté renderer
+          mainWindow.webContents.send('fivem-closed');
         }
       });
     } else {
@@ -142,7 +135,6 @@ async function checkAuth() {
     return;
   }
 
-  // === SESSION EXISTANTE ===
   if (fs.existsSync(userDataPath)) {
     const user = JSON.parse(fs.readFileSync(userDataPath, 'utf-8'));
 
@@ -182,7 +174,6 @@ async function checkAuth() {
     return;
   }
 
-  // Aucune session → démarrer OAuth2
   const authUrl = `https://discord.com/api/oauth2/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=identify%20guilds.members.read`;
   const expressApp = express();
   const server = http.createServer(expressApp);
@@ -350,7 +341,7 @@ ipcMain.handle('check-role', async () => {
   try {
     const memberRes = await fetch(`https://discord.com/api/v10/guilds/${guildId}/members/${user.id}`, {
       headers: {
-        Authorization: `Bot ${botToken}` // ✅ Ici c'était encore TON_BOT_TOKEN, corrigé
+        Authorization: `Bot ${botToken}`
       }
     });
 
@@ -363,8 +354,6 @@ ipcMain.handle('check-role', async () => {
     return { allowed: false };
   }
 });
-
-
 
 
 ipcMain.handle('get-user', async () => {
@@ -395,7 +384,7 @@ ipcMain.handle('get-server-info', async () => {
     return {
       online: true,
       players: players.length,
-      playersList: players, // 👈 Liste complète des joueurs ajoutée ici
+      playersList: players,
       maxPlayers: parseInt(info.vars.sv_maxClients),
       hostname: info.vars.sv_hostname
     };
@@ -404,7 +393,7 @@ ipcMain.handle('get-server-info', async () => {
     return {
       online: false,
       players: 0,
-      playersList: [], // 👈 Retourne une liste vide si erreur
+      playersList: [],
       maxPlayers: 0,
       hostname: "Indisponible"
     };
@@ -540,9 +529,8 @@ ipcMain.handle('get-app-version', () => {
 });
 
 
-// === ⚙️ App Ready ===
 app.whenReady().then(() => {
-  // ✅ Vérifie les variables d'env
+
   const requiredVars = [
     "DISCORD_CLIENT_ID",
     "DISCORD_CLIENT_SECRET",
@@ -581,18 +569,15 @@ app.whenReady().then(() => {
     return;
   }
 
-  // ✅ Lance la fenêtre principale
   createWindow();
 
-  // 🔧 Configure le provider GitHub pour MAJ auto
   autoUpdater.setFeedURL({
     provider: 'github',
     owner: 'M4lwqrex0',
     repo: 'deadland-launcher'
   });
-  // 🔒 Authentification Discord
+
   checkAuth();
 
-  // 🛑 Ferme FiveM si ouvert
   setTimeout(() => closeFiveMIfRunning(), 800);
 });
