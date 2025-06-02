@@ -1,16 +1,52 @@
 const { app, BrowserWindow, ipcMain, shell } = require("electron");
 const path = require("path");
 const fs = require("fs");
+const crypto = require("crypto");
 const dotenv = require("dotenv");
 
-// === 🔐 Chargement sécurisé du .env (fonctionne dans une app packagée avec extraFiles) ===
-const envPath = path.join(process.resourcesPath, ".env");
+// === 🔐 Chargement sécurisé du .env (chiffré en .env.enc) ===
+function decryptAndLoadEnv() {
+  const basePath = process.env.NODE_ENV === "development" ? __dirname : process.resourcesPath;
+  const envEncPath = path.join(basePath, ".env.enc");
+  const envKeyPath = path.join(basePath, ".env.key");
 
-if (fs.existsSync(envPath)) {
-  dotenv.config({ path: envPath });
-  console.log("✅ Fichier .env chargé depuis :", envPath);
-} else {
-  console.error("❌ Fichier .env introuvable :", envPath);
+  if (!fs.existsSync(envEncPath)) {
+    console.error("❌ Fichier .env.enc introuvable :", envEncPath);
+    return false;
+  }
+
+  if (!fs.existsSync(envKeyPath)) {
+    console.error("❌ Fichier .env.key introuvable :", envKeyPath);
+    return false;
+  }
+
+  try {
+    const keyRaw = fs.readFileSync(envKeyPath, "utf-8").trim();
+    const key = Buffer.from(keyRaw.slice(0, 32)); // Clé 256 bits (32 octets)
+    const iv = Buffer.alloc(16, 0); // IV statique (facile à gérer en local/app)
+
+    const encrypted = fs.readFileSync(envEncPath);
+    const decipher = crypto.createDecipheriv("aes-256-cbc", key, iv);
+
+    let decrypted = decipher.update(encrypted);
+    decrypted = Buffer.concat([decrypted, decipher.final()]);
+
+    const decryptedEnvPath = path.join(basePath, ".env");
+    fs.writeFileSync(decryptedEnvPath, decrypted);
+
+    dotenv.config({ path: decryptedEnvPath });
+    console.log("✅ .env chargé depuis .env.enc (déchiffré)");
+
+    return true;
+  } catch (err) {
+    console.error("💥 Erreur déchiffrement .env.enc :", err);
+    return false;
+  }
+}
+
+if (!decryptAndLoadEnv()) {
+  app.quit();
+  return;
 }
 
 // === ✅ Vérification des variables d'environnement requises ===
@@ -46,7 +82,7 @@ const http = require("http");
 const open = require("open");
 const fetch = require("node-fetch");
 
-// === 🌐 Variables d’environnement (sécurisées car validées plus haut) ===
+// === 🌐 Variables d’environnement ===
 const clientId = process.env.DISCORD_CLIENT_ID;
 const clientSecret = process.env.DISCORD_CLIENT_SECRET;
 const redirectUri = process.env.DISCORD_REDIRECT_URI;
@@ -56,9 +92,6 @@ const botToken = process.env.DISCORD_BOT_TOKEN;
 
 // === 📁 Dossier session utilisateur ===
 const userDataPath = path.join(app.getPath("userData"), "user.json");
-
-
-
 
 
 let mainWindow;

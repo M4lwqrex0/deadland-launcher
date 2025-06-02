@@ -25,7 +25,8 @@
       "license.txt"
     ],
     "extraFiles": [
-      ".env"
+      ".env.enc",
+      ".env.key"
     ],
     "publish": [
       {
