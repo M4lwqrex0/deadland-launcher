@@ -585,3 +585,6 @@ autoUpdater.on('update-downloaded', () => {
   }
 });
 
+ipcMain.on('install-update-now', () => {
+  autoUpdater.quitAndInstall();
+});

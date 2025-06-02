@@ -2,8 +2,7 @@ document.getElementById("close-btn").addEventListener("click", () => {
   window.close();
 });
 
-
-// Toast notification
+// === Toast notification ===
 function showToast(message) {
   const sound = new Audio('renderer/cache-success.mp3');
   sound.volume = 0.3;
@@ -21,43 +20,35 @@ function showToast(message) {
   }, 3000);
 }
 
-// Mise à jour statut serveur
+// === Mise à jour statut serveur ===
 async function updateServerStatus() {
   const serverInfo = await window.electronAPI.getServerInfo();
-  const countEl = document.getElementById('player-count');
-  const tooltip = document.getElementById('player-tooltip');
-  const statusEl = document.getElementById('server-status');
+  document.getElementById('player-count').textContent = `${serverInfo.players}/${serverInfo.maxPlayers}`;
+  document.getElementById('server-status').textContent = serverInfo.online ? '🟢 Opérationnel' : '🔴 Fermé';
+  document.getElementById('server-status').style.color = serverInfo.online ? 'lime' : 'red';
 
-  countEl.textContent = `${serverInfo.players}/${serverInfo.maxPlayers}`;
-  statusEl.textContent = serverInfo.online ? '🟢 Opérationnel' : '🔴 Fermé';
-  statusEl.style.color = serverInfo.online ? 'lime' : 'red';
-
-  tooltip.textContent = serverInfo.players > 0
+  document.getElementById('player-tooltip').textContent = serverInfo.players > 0
     ? "🔥 Oh ya du monde de connecté, fonce !"
     : "😴 Aucun joueur actuellement connecté...\nMais connecte-toi, le monde attire le monde !";
 }
 
-// Latence
+// === Latence ===
 async function updateLatency() {
   const latency = await window.electronAPI.getLatency();
-  const latencyDisplay = document.getElementById('latency');
+  const display = document.getElementById('latency');
   if (latency !== null) {
-    latencyDisplay.textContent = `${latency}ms`;
-    latencyDisplay.style.color = latency < 60 ? 'lightgreen' : latency < 120 ? 'orange' : 'red';
+    display.textContent = `${latency}ms`;
+    display.style.color = latency < 60 ? 'lightgreen' : latency < 120 ? 'orange' : 'red';
   } else {
-    latencyDisplay.textContent = 'N/A';
-    latencyDisplay.style.color = 'red';
+    display.textContent = 'N/A';
+    display.style.color = 'red';
   }
 }
 
-// Initialisation après login
+// === Initialisation après login ===
 function initApp(user) {
-  const authScreen = document.getElementById("auth-screen");
-  const mainContent = document.getElementById("main-content");
-  const launchButton = document.querySelector(".launch-btn");
-
-  authScreen.style.display = "none";
-  mainContent.style.display = "block";
+  document.getElementById("auth-screen").style.display = "none";
+  document.getElementById("main-content").style.display = "block";
 
   const container = document.createElement("div");
   container.classList.add("discord-container");
@@ -86,7 +77,9 @@ function initApp(user) {
     updateLatency();
   }, 10000);
 
-  // ✅ Vérification du rôle à l'ouverture
+  const launchButton = document.querySelector(".launch-btn");
+
+  // Vérification initiale du rôle
   window.electronAPI.checkRoleValid().then(res => {
     if (!res.allowed) {
       launchButton.disabled = true;
@@ -96,12 +89,9 @@ function initApp(user) {
     }
   });
 
-  // ✅ Vérification en temps réel toutes les 15s
+  // Vérification périodique du rôle
   setInterval(async () => {
-    console.log("🕒 Vérification du rôle en temps réel...");
     const res = await window.electronAPI.checkRoleValid();
-    console.log("Résultat rôle:", res);
-
     if (!res.allowed && !launchButton.disabled) {
       launchButton.disabled = true;
       launchButton.textContent = "Accès refusé (Rôle manquant)";
@@ -118,23 +108,18 @@ function initApp(user) {
   }, 15000);
 }
 
-
-// Authentification utilisateur
+// === Authentification utilisateur ===
 window.electronAPI.getUser().then(user => {
-  if (user) {
-    initApp(user);
-  } else {
-    document.getElementById("auth-screen").innerHTML = "<p>Connexion Discord requise pour utiliser le launcher...</p>";
-  }
+  if (user) initApp(user);
+  else document.getElementById("auth-screen").innerHTML = "<p>Connexion Discord requise pour utiliser le launcher...</p>";
 });
 
-// Événement auth succès
 window.electronAPI.onAuthSuccess((event, user) => {
   console.log("[RENDERER] Connexion Discord validée :", user.username);
   initApp(user);
 });
 
-// Liens externes
+// === Liens externes ===
 document.getElementById("link-tebex").addEventListener("click", () => {
   window.electronAPI.openExternal("https://deadland-rp.tebex.io");
 });
@@ -143,20 +128,18 @@ document.getElementById("link-discord").addEventListener("click", () => {
 });
 document.getElementById("link-cache").addEventListener("click", async () => {
   const result = await window.electronAPI.clearCache();
-  if (result.success) {
-    showToast("✅ Cache supprimé avec succès !");
-  } else {
-    showToast("❌ Erreur lors de la suppression : " + result.error);
-  }
+  result.success
+    ? showToast("✅ Cache supprimé avec succès !")
+    : showToast("❌ Erreur lors de la suppression : " + result.error);
 });
 
-// Event live si rôle supprimé (optionnel selon ton backend)
+// === Rôle retiré en live ===
 window.electronAPI.onRoleMissing?.((event, username) => {
   showToast(`⚠️ ${username}, ton rôle Discord a été retiré. Accès désactivé.`);
   document.querySelector(".launch-btn").disabled = true;
 });
 
-// Lancement du jeu
+// === Lancement du jeu ===
 async function start() {
   const box = document.getElementById("verification-box");
   const progress = document.getElementById("progress-bar");
@@ -166,13 +149,44 @@ async function start() {
   box.style.display = "block";
   roleStatus.textContent = "";
   progress.style.width = "0%";
+  label.textContent = "Vérification de mise à jour...";
 
-  label.textContent = "Scan de logiciels malveillants...";
-  for (let i = 0; i <= 40; i++) {
-    progress.style.width = `${i}%`;
-    await new Promise(r => setTimeout(r, 20));
+  const updateInfo = await window.electronAPI.checkForUpdate?.();
+  if (updateInfo?.updateAvailable) {
+    label.textContent = "Mise à jour disponible. Téléchargement en cours...";
+
+    await new Promise((resolve) => {
+      const progressHandler = (_, percent) => {
+        progress.style.width = `${percent}%`;
+        label.textContent = `Mise à jour ${Math.floor(percent)}%`;
+      };
+
+      const downloadedHandler = () => {
+        label.textContent = "✅ Mise à jour téléchargée. Redémarrage...";
+        window.electronAPI.onUpdateProgress = null;
+        window.electronAPI.onUpdateDownloaded = null;
+
+        setTimeout(() => {
+          window.electronAPI.installUpdateNow(); // ← ⬅️ Redémarrage automatique ici
+        }, 2000);
+      };
+
+      window.electronAPI.onUpdateProgress?.(progressHandler);
+      window.electronAPI.onUpdateDownloaded?.(downloadedHandler);
+    });
+
+    return; // Stop ici, le redémarrage va se faire
+  } else {
+    label.textContent = "Pas de mise à jour. Analyse système...";
   }
 
+  // Suite normale si pas de mise à jour
+  for (let i = 40; i <= 60; i++) {
+    progress.style.width = `${i}%`;
+    await new Promise(r => setTimeout(r, 15));
+  }
+
+  label.textContent = "Scan de logiciels malveillants...";
   const result = await window.electronAPI.scanForCheats();
 
   if (!result.success) {
@@ -186,20 +200,17 @@ async function start() {
   }
 
   label.textContent = "Aucune anomalie détectée. Lancement...";
-  for (let i = 41; i <= 100; i++) {
+  for (let i = 61; i <= 100; i++) {
     progress.style.width = `${i}%`;
-    await new Promise(r => setTimeout(r, 20));
+    await new Promise(r => setTimeout(r, 15));
   }
 
   box.style.display = "none";
   window.electronAPI.launchGame();
 }
 
-window.electronAPI.onFiveMClosed?.(() => {
-  showToast("🛑 La fermeture automatique de FiveM a été effectuée pour éviter toute injection..");
-});
 
-
+// === Bannière d’infos ===
 const newsMessages = [
   "🚨 Mise à jour : Aucune",
   "🎉 Événement RP : Aucun !",
@@ -209,31 +220,16 @@ const newsMessages = [
 ];
 
 let newsIndex = 0;
-
 function rotateNews() {
   const banner = document.getElementById("news-banner");
   if (!banner) return;
 
-  banner.style.opacity = 0; // transition douce
+  banner.style.opacity = 0;
   setTimeout(() => {
     banner.textContent = newsMessages[newsIndex];
     banner.style.opacity = 1;
     newsIndex = (newsIndex + 1) % newsMessages.length;
-  }, 300); // délai court pour le fondu
+  }, 300);
 }
-
-window.electronAPI?.onUpdateAvailable?.(() => {
-  showToast("🔔 Une mise à jour est disponible. Téléchargement en cours...");
-});
-
-window.electronAPI?.onUpdateProgress?.((_, percent) => {
-  showToast(`⬇️ Mise à jour : ${Math.floor(percent)}% téléchargé`);
-});
-
-window.electronAPI?.onUpdateDownloaded?.(() => {
-  showToast("✅ Mise à jour téléchargée. Elle sera installée au prochain redémarrage.");
-});
-
-
-setInterval(rotateNews, 5000); // Change toutes les 5s
-rotateNews(); // Affiche immédiatement le 1er message
+setInterval(rotateNews, 5000);
+rotateNews();
