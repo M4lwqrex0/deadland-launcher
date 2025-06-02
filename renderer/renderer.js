@@ -195,7 +195,7 @@ const newsMessages = [
   "🎉 Événement RP : Aucun !",
   "🛠 Maintenance prévue : Aucune.",
   "📢 Rejoignez le Discord pour les dernières annonces !",
-  "🔥 Nouveau : Rien"
+  "🔥 Nouveau : RedEngine et Process Hacker sont détectable par le launcher"
 ];
 
 let newsIndex = 0;
