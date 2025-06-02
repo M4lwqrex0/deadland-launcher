@@ -535,6 +535,10 @@ autoUpdater.on('update-downloaded', () => {
   }
 });
 
+ipcMain.handle('get-app-version', () => {
+  return app.getVersion();
+});
+
 
 // === ⚙️ App Ready ===
 app.whenReady().then(() => {

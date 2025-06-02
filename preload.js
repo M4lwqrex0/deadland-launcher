@@ -28,5 +28,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onFiveMClosed: (callback) => ipcRenderer.on('fivem-closed', callback),
   onUpdateAvailable: (callback) => ipcRenderer.on('update-available', callback),
   onUpdateProgress: (callback) => ipcRenderer.on('update-progress', callback),
-  onUpdateDownloaded: (callback) => ipcRenderer.on('update-downloaded', callback)
+  onUpdateDownloaded: (callback) => ipcRenderer.on('update-downloaded', callback),
+  getAppVersion: () => ipcRenderer.invoke('get-app-version')
 });

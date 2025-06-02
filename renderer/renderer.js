@@ -254,5 +254,9 @@ async function checkAndHandleUpdate() {
   }
 }
 
+window.electronAPI.getAppVersion().then(version => {
+  const el = document.getElementById("launcher-version");
+  if (el) el.textContent = `Version : v${version}`;
+});
 
 
