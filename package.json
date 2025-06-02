@@ -1,7 +1,7 @@
 {
   "name": "DeadLand-RP-Launcher",
   "author": "M4lwqre",
-  "version": "1.0.26",
+  "version": "1.0.27",
   "description": "Launcher officiel Deadland RP",
   "main": "main.js",
   "scripts": {
@@ -27,11 +27,11 @@
     "extraFiles": [
       {
         "from": ".env.enc",
-        "to": ".env.enc"
+        "to": "resources/.env.enc"
       },
       {
         "from": ".env.key",
-        "to": ".env.key"
+        "to": "resources/.env.key"
       }
     ],
     "publish": [
