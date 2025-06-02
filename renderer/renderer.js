@@ -223,26 +223,23 @@ async function checkAndHandleUpdate() {
   const progress = document.getElementById("progress-bar");
   const label = document.getElementById("verification-label");
 
-  // Préparation UI
+  // UI ready
   box.style.display = "block";
   progress.style.width = "0%";
   label.textContent = "Vérification des mises à jour...";
 
-  // Attache les listeners AVANT le check
-  const onProgress = (_, percent) => {
+  // Branche AVANT
+  window.electronAPI.onUpdateProgress((_, percent) => {
     progress.style.width = `${percent}%`;
     label.textContent = `Téléchargement : ${Math.floor(percent)}%`;
-  };
+  });
 
-  const onDownloaded = () => {
-    label.textContent = "✅ Mise à jour téléchargée. Redémarrage imminent...";
+  window.electronAPI.onUpdateDownloaded(() => {
+    label.textContent = "✅ Mise à jour téléchargée. Redémarrage...";
     setTimeout(() => {
-      window.electronAPI.installUpdateNow();
+      window.electronAPI.installUpdateNow(); // 🔁 relance automatique
     }, 2000);
-  };
-
-  window.electronAPI.onUpdateProgress(onProgress);
-  window.electronAPI.onUpdateDownloaded(onDownloaded);
+  });
 
   try {
     const updateInfo = await window.electronAPI.checkForUpdate?.();
@@ -250,11 +247,12 @@ async function checkAndHandleUpdate() {
       box.style.display = "none";
     }
   } catch (err) {
-    console.error("❌ Erreur vérification MAJ :", err);
-    label.textContent = "Erreur lors de la vérification de mise à jour.";
+    console.error("❌ Erreur MAJ :", err);
+    label.textContent = "Erreur vérification mise à jour.";
   } finally {
     updateCheckInProgress = false;
   }
 }
+
 
 

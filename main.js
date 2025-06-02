@@ -507,45 +507,19 @@ ipcMain.handle("scan-for-cheats", async () => {
 
 
 
-let updateInProgress = false;
-
-// 🧠 Handler check des MAJ
 ipcMain.handle('check-for-update', async () => {
-  if (updateInProgress) {
-    console.log("⏳ Update check already in progress");
-    return { updateAvailable: false };
-  }
-
-  updateInProgress = true;
-  console.log("🚀 Début vérification MAJ...");
-
   try {
     const result = await autoUpdater.checkForUpdates();
     const current = app.getVersion();
     const latest = result?.updateInfo?.version;
-    console.log(`📦 Version actuelle: ${current}, Dernière dispo: ${latest}`);
-
-    const isUpdate = latest && latest !== current;
-    console.log(`🧠 MAJ requise ? ${isUpdate}`);
-
-    return { updateAvailable: isUpdate };
+    return { updateAvailable: latest && latest !== current };
   } catch (err) {
-    console.error("❌ Erreur MAJ:", err);
+    console.error("Erreur MAJ:", err);
     return { updateAvailable: false };
-  } finally {
-    updateInProgress = false;
   }
 });
 
-
-
-// 🚀 Handler pour installer la MAJ (avec sécurité optionnelle)
 ipcMain.handle('install-update-now', () => {
-  if (!app.isPackaged) {
-    console.warn("Tentative d'installation ignorée en mode développement.");
-    return;
-  }
-  console.log("➡️ Installation de la mise à jour...");
   autoUpdater.quitAndInstall();
 });
 
