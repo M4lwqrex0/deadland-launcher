@@ -566,35 +566,18 @@ app.whenReady().then(() => {
   checkAuth();
 });
 
-// === 🎯 Notifications de mise à jour ===
-autoUpdater.on('update-available', () => {
-  if (mainWindow) {
-    mainWindow.webContents.send('update-available');
-  }
-});
-
-autoUpdater.on('download-progress', (progressObj) => {
-  if (mainWindow) {
-    mainWindow.webContents.send('update-progress', progressObj.percent);
-  }
-});
-
-autoUpdater.on('update-downloaded', () => {
-  if (mainWindow) {
-    mainWindow.webContents.send('update-downloaded');
-  }
-});
-
 ipcMain.handle('check-for-update', async () => {
   try {
     const result = await autoUpdater.checkForUpdates();
-    return { updateAvailable: !!result?.updateInfo?.version };
+
+    const latest = result?.updateInfo?.version;
+    const current = app.getVersion();
+
+    const isUpdate = latest && latest !== current;
+
+    return { updateAvailable: isUpdate };
   } catch (err) {
-    console.error("Erreur lors de la vérif de maj:", err);
+    console.error("Erreur check-for-update :", err);
     return { updateAvailable: false };
   }
-});
-
-ipcMain.on('install-update-now', () => {
-  autoUpdater.quitAndInstall();
 });
