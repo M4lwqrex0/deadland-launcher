@@ -506,6 +506,7 @@ ipcMain.handle("scan-for-cheats", async () => {
 });
 
 
+
 let updateInProgress = false;
 
 // 🧠 Handler check des MAJ
@@ -537,6 +538,7 @@ ipcMain.handle('check-for-update', async () => {
 });
 
 
+
 // 🚀 Handler pour installer la MAJ (avec sécurité optionnelle)
 ipcMain.handle('install-update-now', () => {
   if (!app.isPackaged) {
@@ -546,6 +548,19 @@ ipcMain.handle('install-update-now', () => {
   console.log("➡️ Installation de la mise à jour...");
   autoUpdater.quitAndInstall();
 });
+
+autoUpdater.on('download-progress', (progressObj) => {
+  if (mainWindow) {
+    mainWindow.webContents.send('update-progress', progressObj.percent);
+  }
+});
+
+autoUpdater.on('update-downloaded', () => {
+  if (mainWindow) {
+    mainWindow.webContents.send('update-downloaded');
+  }
+});
+
 
 // === ⚙️ App Ready ===
 app.whenReady().then(() => {

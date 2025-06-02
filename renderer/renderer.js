@@ -121,8 +121,9 @@ window.electronAPI.getUser().then(user => {
 window.electronAPI.onAuthSuccess((event, user) => {
   console.log("[RENDERER] Connexion Discord validée :", user.username);
   initApp(user);
-  checkAndHandleUpdate();
+  checkAndHandleUpdate(); // <-- ici
 });
+
 
 // === Liens externes ===
 document.getElementById("link-tebex").addEventListener("click", () => {
@@ -218,36 +219,42 @@ async function checkAndHandleUpdate() {
   if (updateCheckInProgress) return;
   updateCheckInProgress = true;
 
-  const updateInfo = await window.electronAPI.checkForUpdate?.();
-  if (updateInfo?.updateAvailable) {
-    const box = document.getElementById("verification-box");
-    const progress = document.getElementById("progress-bar");
-    const label = document.getElementById("verification-label");
+  const box = document.getElementById("verification-box");
+  const progress = document.getElementById("progress-bar");
+  const label = document.getElementById("verification-label");
 
-    box.style.display = "block";
-    progress.style.width = "0%";
-    label.textContent = "Mise à jour disponible. Téléchargement...";
+  // Préparation UI
+  box.style.display = "block";
+  progress.style.width = "0%";
+  label.textContent = "Vérification des mises à jour...";
 
-    let hasResolved = false;
+  // Attache les listeners AVANT le check
+  const onProgress = (_, percent) => {
+    progress.style.width = `${percent}%`;
+    label.textContent = `Téléchargement : ${Math.floor(percent)}%`;
+  };
 
-    // 👂 Récupère les % en live
-    window.electronAPI.onUpdateProgress?.((_, percent) => {
-      progress.style.width = `${percent}%`;
-      label.textContent = `Mise à jour ${Math.floor(percent)}%`;
-    });
+  const onDownloaded = () => {
+    label.textContent = "✅ Mise à jour téléchargée. Redémarrage imminent...";
+    setTimeout(() => {
+      window.electronAPI.installUpdateNow();
+    }, 2000);
+  };
 
-    // 🟢 Quand le téléchargement est fini : redémarrage
-    window.electronAPI.onUpdateDownloaded?.(() => {
-      if (hasResolved) return;
-      hasResolved = true;
-      label.textContent = "✅ Mise à jour téléchargée. Redémarrage...";
-      setTimeout(() => {
-        window.electronAPI.installUpdateNow(); // 🧨 Quit + relaunch
-      }, 2000);
-    });
+  window.electronAPI.onUpdateProgress(onProgress);
+  window.electronAPI.onUpdateDownloaded(onDownloaded);
+
+  try {
+    const updateInfo = await window.electronAPI.checkForUpdate?.();
+    if (!updateInfo?.updateAvailable) {
+      box.style.display = "none";
+    }
+  } catch (err) {
+    console.error("❌ Erreur vérification MAJ :", err);
+    label.textContent = "Erreur lors de la vérification de mise à jour.";
+  } finally {
+    updateCheckInProgress = false;
   }
-
-  updateCheckInProgress = false;
 }
 
 

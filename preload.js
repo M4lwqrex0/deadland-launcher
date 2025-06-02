@@ -13,7 +13,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // Mises à jour
   checkForUpdate: () => ipcRenderer.invoke("check-for-update"),
-  installUpdateNow: () => ipcRenderer.send("install-update-now"),
+  installUpdateNow: () => ipcRenderer.invoke("install-update-now"),
 
   // Listeners (event-based)
   onAuthSuccess: (callback) => ipcRenderer.on('auth-success', callback),
