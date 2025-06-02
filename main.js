@@ -585,6 +585,16 @@ autoUpdater.on('update-downloaded', () => {
   }
 });
 
+ipcMain.handle('check-for-update', async () => {
+  try {
+    const result = await autoUpdater.checkForUpdates();
+    return { updateAvailable: !!result?.updateInfo?.version };
+  } catch (err) {
+    console.error("Erreur lors de la vérif de maj:", err);
+    return { updateAvailable: false };
+  }
+});
+
 ipcMain.on('install-update-now', () => {
   autoUpdater.quitAndInstall();
 });

@@ -110,13 +110,18 @@ function initApp(user) {
 
 // === Authentification utilisateur ===
 window.electronAPI.getUser().then(user => {
-  if (user) initApp(user);
-  else document.getElementById("auth-screen").innerHTML = "<p>Connexion Discord requise pour utiliser le launcher...</p>";
+  if (user) {
+    initApp(user);
+    checkAndHandleUpdate(); // ← ici aussi
+  } else {
+    document.getElementById("auth-screen").innerHTML = "<p>Connexion Discord requise pour utiliser le launcher...</p>";
+  }
 });
 
 window.electronAPI.onAuthSuccess((event, user) => {
   console.log("[RENDERER] Connexion Discord validée :", user.username);
   initApp(user);
+  checkAndHandleUpdate();
 });
 
 // === Liens externes ===
@@ -149,38 +154,9 @@ async function start() {
   box.style.display = "block";
   roleStatus.textContent = "";
   progress.style.width = "0%";
-  label.textContent = "Vérification de mise à jour...";
+  label.textContent = "Analyse système...";
 
-  const updateInfo = await window.electronAPI.checkForUpdate?.();
-  if (updateInfo?.updateAvailable) {
-    label.textContent = "Mise à jour disponible. Téléchargement en cours...";
-
-    await new Promise((resolve) => {
-      const progressHandler = (_, percent) => {
-        progress.style.width = `${percent}%`;
-        label.textContent = `Mise à jour ${Math.floor(percent)}%`;
-      };
-
-      const downloadedHandler = () => {
-        label.textContent = "✅ Mise à jour téléchargée. Redémarrage...";
-        window.electronAPI.onUpdateProgress = null;
-        window.electronAPI.onUpdateDownloaded = null;
-
-        setTimeout(() => {
-          window.electronAPI.installUpdateNow(); // ← ⬅️ Redémarrage automatique ici
-        }, 2000);
-      };
-
-      window.electronAPI.onUpdateProgress?.(progressHandler);
-      window.electronAPI.onUpdateDownloaded?.(downloadedHandler);
-    });
-
-    return; // Stop ici, le redémarrage va se faire
-  } else {
-    label.textContent = "Pas de mise à jour. Analyse système...";
-  }
-
-  // Suite normale si pas de mise à jour
+  // Scan anti-triche (40% → 60%)
   for (let i = 40; i <= 60; i++) {
     progress.style.width = `${i}%`;
     await new Promise(r => setTimeout(r, 15));
@@ -199,6 +175,7 @@ async function start() {
     return;
   }
 
+  // Finalisation (61% → 100%)
   label.textContent = "Aucune anomalie détectée. Lancement...";
   for (let i = 61; i <= 100; i++) {
     progress.style.width = `${i}%`;
@@ -208,6 +185,7 @@ async function start() {
   box.style.display = "none";
   window.electronAPI.launchGame();
 }
+
 
 
 // === Bannière d’infos ===
@@ -233,3 +211,39 @@ function rotateNews() {
 }
 setInterval(rotateNews, 5000);
 rotateNews();
+
+let updateCheckInProgress = false;
+
+async function checkAndHandleUpdate() {
+  if (updateCheckInProgress) return; // évite double déclenchement
+  updateCheckInProgress = true;
+
+  const updateInfo = await window.electronAPI.checkForUpdate?.();
+  if (updateInfo?.updateAvailable) {
+    const box = document.getElementById("verification-box");
+    const progress = document.getElementById("progress-bar");
+    const label = document.getElementById("verification-label");
+
+    box.style.display = "block";
+    progress.style.width = "0%";
+    label.textContent = "Mise à jour disponible. Téléchargement...";
+
+    await new Promise((resolve) => {
+      window.electronAPI.onUpdateProgress?.((_, percent) => {
+        progress.style.width = `${percent}%`;
+        label.textContent = `Mise à jour ${Math.floor(percent)}%`;
+      });
+
+      window.electronAPI.onUpdateDownloaded?.(() => {
+        label.textContent = "✅ Mise à jour téléchargée. Redémarrage...";
+        setTimeout(() => {
+          window.electronAPI.installUpdateNow();
+          resolve(); // ← clôture de la promesse
+        }, 2000);
+      });
+    });
+  }
+
+  updateCheckInProgress = false;
+}
+
