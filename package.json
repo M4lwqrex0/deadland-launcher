@@ -1,7 +1,7 @@
 {
   "name": "DeadLand-RP-Launcher",
   "author": "M4lwqre",
-  "version": "1.0.46",
+  "version": "1.0.47",
   "description": "Launcher officiel Deadland RP",
   "main": "main.js",
   "scripts": {
