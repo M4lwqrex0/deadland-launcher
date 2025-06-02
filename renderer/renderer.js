@@ -215,7 +215,7 @@ rotateNews();
 let updateCheckInProgress = false;
 
 async function checkAndHandleUpdate() {
-  if (updateCheckInProgress) return; // évite double déclenchement
+  if (updateCheckInProgress) return;
   updateCheckInProgress = true;
 
   const updateInfo = await window.electronAPI.checkForUpdate?.();
@@ -228,22 +228,26 @@ async function checkAndHandleUpdate() {
     progress.style.width = "0%";
     label.textContent = "Mise à jour disponible. Téléchargement...";
 
-    await new Promise((resolve) => {
-      window.electronAPI.onUpdateProgress?.((_, percent) => {
-        progress.style.width = `${percent}%`;
-        label.textContent = `Mise à jour ${Math.floor(percent)}%`;
-      });
+    let hasResolved = false;
 
-      window.electronAPI.onUpdateDownloaded?.(() => {
-        label.textContent = "✅ Mise à jour téléchargée. Redémarrage...";
-        setTimeout(() => {
-          window.electronAPI.installUpdateNow();
-          resolve(); // ← clôture de la promesse
-        }, 2000);
-      });
+    // 👂 Récupère les % en live
+    window.electronAPI.onUpdateProgress?.((_, percent) => {
+      progress.style.width = `${percent}%`;
+      label.textContent = `Mise à jour ${Math.floor(percent)}%`;
+    });
+
+    // 🟢 Quand le téléchargement est fini : redémarrage
+    window.electronAPI.onUpdateDownloaded?.(() => {
+      if (hasResolved) return;
+      hasResolved = true;
+      label.textContent = "✅ Mise à jour téléchargée. Redémarrage...";
+      setTimeout(() => {
+        window.electronAPI.installUpdateNow(); // 🧨 Quit + relaunch
+      }, 2000);
     });
   }
 
   updateCheckInProgress = false;
 }
+
 

@@ -506,8 +506,43 @@ ipcMain.handle("scan-for-cheats", async () => {
 });
 
 
+let updateInProgress = false;
+
+// 🧠 Handler check des MAJ
+ipcMain.handle('check-for-update', async () => {
+  if (updateInProgress) {
+    console.log("⏳ Update check already in progress");
+    return { updateAvailable: false };
+  }
+
+  updateInProgress = true;
+  try {
+    const result = await autoUpdater.checkForUpdates();
+    const current = app.getVersion();
+    const latest = result?.updateInfo?.version;
+    const isUpdate = latest && latest !== current;
+    return { updateAvailable: isUpdate };
+  } catch (err) {
+    console.error("Erreur MAJ:", err);
+    return { updateAvailable: false };
+  } finally {
+    updateInProgress = false;
+  }
+});
+
+// 🚀 Handler pour installer la MAJ (avec sécurité optionnelle)
+ipcMain.handle('install-update-now', () => {
+  if (!app.isPackaged) {
+    console.warn("Tentative d'installation ignorée en mode développement.");
+    return;
+  }
+  console.log("➡️ Installation de la mise à jour...");
+  autoUpdater.quitAndInstall();
+});
+
+// === ⚙️ App Ready ===
 app.whenReady().then(() => {
-  // Vérifie si l'environnement est complet
+  // ✅ Vérifie les variables d'env
   const requiredVars = [
     "DISCORD_CLIENT_ID",
     "DISCORD_CLIENT_SECRET",
@@ -522,7 +557,6 @@ app.whenReady().then(() => {
   if (missing.length > 0) {
     const errorMsg = `Certaines variables .env sont manquantes :\n\n${missing.join('\n')}`;
 
-    // Affiche une fenêtre d'erreur utilisateur
     const errorWin = new BrowserWindow({
       width: 500,
       height: 250,
@@ -547,44 +581,19 @@ app.whenReady().then(() => {
     return;
   }
 
-  // ✅ Démarrage normal
+  // ✅ Lance la fenêtre principale
   createWindow();
 
+  // 🔧 Configure le provider GitHub pour MAJ auto
   autoUpdater.setFeedURL({
     provider: 'github',
     owner: 'M4lwqrex0',
     repo: 'deadland-launcher'
   });
 
-
-  // 🛑 Ferme FiveM s'il est déjà ouvert
-  setTimeout(() => closeFiveMIfRunning(), 800);
-
-  // 🔐 Lance l'authentification Discord
+  // 🔒 Authentification Discord
   checkAuth();
-});
 
-
-
-let updateInProgress = false;
-
-ipcMain.handle('check-for-update', async () => {
-  if (updateInProgress) {
-    console.log("⏳ Update check already in progress");
-    return { updateAvailable: false };
-  }
-
-  updateInProgress = true;
-  try {
-    const result = await autoUpdater.checkForUpdates();
-    const current = app.getVersion();
-    const latest = result?.updateInfo?.version;
-    const isUpdate = latest && latest !== current;
-    return { updateAvailable: isUpdate };
-  } catch (err) {
-    console.error("Erreur MAJ:", err);
-    return { updateAvailable: false };
-  } finally {
-    updateInProgress = false;
-  }
+  // 🛑 Ferme FiveM si ouvert
+  setTimeout(() => closeFiveMIfRunning(), 800);
 });
