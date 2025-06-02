@@ -21,9 +21,9 @@ function decryptAndLoadEnv() {
   }
 
   try {
-    const keyRaw = fs.readFileSync(envKeyPath, "utf-8").trim();
-    const key = Buffer.from(keyRaw.slice(0, 32)); // Clé 256 bits (32 octets)
-    const iv = Buffer.alloc(16, 0); // IV statique (facile à gérer en local/app)
+    const keyHex = fs.readFileSync(envKeyPath, "utf-8").trim();
+    const key = Buffer.from(keyHex, "hex"); // ← Clé hex vers buffer (32 octets pour AES-256)
+    const iv = Buffer.alloc(16, 0); // IV statique (pour simplicité, changeable)
 
     const encrypted = fs.readFileSync(envEncPath);
     const decipher = crypto.createDecipheriv("aes-256-cbc", key, iv);
@@ -31,22 +31,23 @@ function decryptAndLoadEnv() {
     let decrypted = decipher.update(encrypted);
     decrypted = Buffer.concat([decrypted, decipher.final()]);
 
-    const decryptedEnvPath = path.join(basePath, ".env");
-    fs.writeFileSync(decryptedEnvPath, decrypted);
+    // Parse directement sans écrire un .env temporaire
+    const parsed = dotenv.parse(decrypted);
+    for (const k in parsed) {
+      process.env[k] = parsed[k];
+    }
 
-    dotenv.config({ path: decryptedEnvPath });
-    console.log("✅ .env chargé depuis .env.enc (déchiffré)");
-
+    console.log("✅ Variables .env chargées depuis .env.enc");
     return true;
+
   } catch (err) {
-    console.error("💥 Erreur déchiffrement .env.enc :", err);
+    console.error("💥 Erreur de déchiffrement .env.enc :", err.message);
     return false;
   }
 }
 
 if (!decryptAndLoadEnv()) {
   app.quit();
-  return;
 }
 
 // === ✅ Vérification des variables d'environnement requises ===
@@ -63,7 +64,7 @@ const missingVars = requiredEnvVars.filter((key) => !process.env[key]);
 
 if (missingVars.length > 0) {
   console.error("❌ Variables d’environnement manquantes :", missingVars.join(", "));
-  app.quit(); // Blocage immédiat de l'app
+  app.quit();
 }
 
 // === 🧪 DEBUG ENV ===
@@ -92,6 +93,7 @@ const botToken = process.env.DISCORD_BOT_TOKEN;
 
 // === 📁 Dossier session utilisateur ===
 const userDataPath = path.join(app.getPath("userData"), "user.json");
+
 
 
 let mainWindow;
