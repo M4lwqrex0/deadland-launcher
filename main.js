@@ -556,8 +556,6 @@ app.whenReady().then(() => {
     repo: 'deadland-launcher'
   });
 
-  // 🔁 Vérifie les mises à jour
-  autoUpdater.checkForUpdatesAndNotify();
 
   // 🛑 Ferme FiveM s'il est déjà ouvert
   setTimeout(() => closeFiveMIfRunning(), 800);
@@ -566,18 +564,27 @@ app.whenReady().then(() => {
   checkAuth();
 });
 
+
+
+let updateInProgress = false;
+
 ipcMain.handle('check-for-update', async () => {
+  if (updateInProgress) {
+    console.log("⏳ Update check already in progress");
+    return { updateAvailable: false };
+  }
+
+  updateInProgress = true;
   try {
     const result = await autoUpdater.checkForUpdates();
-
-    const latest = result?.updateInfo?.version;
     const current = app.getVersion();
-
+    const latest = result?.updateInfo?.version;
     const isUpdate = latest && latest !== current;
-
     return { updateAvailable: isUpdate };
   } catch (err) {
-    console.error("Erreur check-for-update :", err);
+    console.error("Erreur MAJ:", err);
     return { updateAvailable: false };
+  } finally {
+    updateInProgress = false;
   }
 });
