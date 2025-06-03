@@ -531,7 +531,7 @@ ipcMain.handle('get-app-version', () => {
 ipcMain.handle('get-random-password', async () => {
   try {
     const basePath = process.resourcesPath;
-    const passwordFilePath = path.join(basePath, 'resources', 'mots-de-passe.txt');
+    const passwordFilePath = path.join(basePath, 'mots-de-passe.txt');
 
     if (!fs.existsSync(passwordFilePath)) {
       throw new Error('Fichier mots-de-passe.txt introuvable.');
@@ -551,6 +551,7 @@ ipcMain.handle('get-random-password', async () => {
     return null;
   }
 });
+
 
 
 
