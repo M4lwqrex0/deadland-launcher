@@ -610,7 +610,7 @@ app.whenReady().then(() => {
   rpcClient.on('ready', () => {
     rpcClient.setActivity({
       details: "Launcher DeadLand RP",
-      state: "Connexion sécurisée...",
+      state: "Connexion sécurisée../Scanner de cheats",
       startTimestamp: new Date(),
       largeImageKey: "logo",
       largeImageText: "DeadLand RP",
