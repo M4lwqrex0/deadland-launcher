@@ -308,3 +308,10 @@ input {
   margin-top: 4px;
   font-family: 'Orbitron', sans-serif;
 }
+
+.password-display {
+  font-size: 20px;
+  color: #a66cff;
+  margin-bottom: 15px;
+  word-break: break-all;
+}

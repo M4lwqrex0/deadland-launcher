@@ -164,15 +164,41 @@ async function start() {
     return;
   }
 
-  label.textContent = "Aucune anomalie détectée. Lancement...";
+  label.textContent = "Aucune anomalie détectée. Préparation du lancement...";
   for (let i = 61; i <= 100; i++) {
     progress.style.width = `${i}%`;
     await new Promise(r => setTimeout(r, 15));
   }
 
   box.style.display = "none";
-  window.electronAPI.launchGame();
+
+  const passwordPopup = document.getElementById("password-popup");
+  const passwordDisplay = document.getElementById("password-display");
+  const copyBtn = document.getElementById("copy-password");
+
+  const randomPassword = await window.electronAPI.getRandomPassword?.();
+  if (!randomPassword) {
+    passwordDisplay.textContent = "❌ Erreur : Aucun mot de passe généré.";
+    passwordPopup.style.display = "block";
+    return;
+  }
+
+  passwordDisplay.textContent = randomPassword;
+  passwordPopup.style.display = "block";
+
+  copyBtn.onclick = async () => {
+    try {
+      await navigator.clipboard.writeText(randomPassword);
+      passwordPopup.style.display = "none";
+      window.electronAPI.launchGame();
+    } catch (err) {
+      console.error("Erreur de copie dans le presse-papier :", err);
+      passwordDisplay.textContent = "❌ Échec de copie. Copie-le manuellement.";
+    }
+  };
 }
+
+
 
 
 const newsMessages = [

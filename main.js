@@ -528,6 +528,32 @@ ipcMain.handle('get-app-version', () => {
   return app.getVersion();
 });
 
+ipcMain.handle('get-random-password', async () => {
+  try {
+    const basePath = process.env.NODE_ENV === 'development'
+      ? path.join(__dirname, 'resources')
+      : path.join(process.resourcesPath, 'resources');
+    const passwordFilePath = path.join(basePath, 'mots-de-passe.txt');
+
+    if (!fs.existsSync(passwordFilePath)) {
+      throw new Error('Fichier passwords.txt introuvable.');
+    }
+
+    const content = await fsPromises.readFile(passwordFilePath, 'utf-8');
+    const lines = content.split(/\r?\n/).filter(Boolean);
+
+    if (lines.length === 0) {
+      throw new Error('Aucun mot de passe trouvé dans passwords.txt');
+    }
+
+    const randomIndex = Math.floor(Math.random() * lines.length);
+    return lines[randomIndex];
+  } catch (err) {
+    console.error("❌ Erreur lecture password:", err);
+    return null;
+  }
+});
+
 
 app.whenReady().then(() => {
 
