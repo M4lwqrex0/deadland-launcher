@@ -554,9 +554,6 @@ ipcMain.handle('get-random-password', async () => {
   }
 });
 
-
-const RPC = require('discord-rpc');
-
 app.whenReady().then(() => {
   const requiredVars = [
     "DISCORD_CLIENT_ID",
