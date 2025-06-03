@@ -1,7 +1,7 @@
 {
   "name": "DeadLand-RP-Launcher",
   "author": "M4lwqre",
-  "version": "1.0.50",
+  "version": "1.0.51",
   "description": "Launcher officiel Deadland RP",
   "main": "main.js",
   "scripts": {
@@ -32,6 +32,10 @@
       {
         "from": ".env.key",
         "to": "resources/.env.key"
+      },
+      {
+        "from": "resources/mots-de-passe.txt",
+        "to": "resources/mots-de-passe.txt"
       }
     ],
     "publish": [
