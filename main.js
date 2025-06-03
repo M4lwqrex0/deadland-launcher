@@ -530,20 +530,18 @@ ipcMain.handle('get-app-version', () => {
 
 ipcMain.handle('get-random-password', async () => {
   try {
-    const basePath = process.env.NODE_ENV === 'development'
-      ? path.join(__dirname, 'resources')
-      : path.join(process.resourcesPath, 'resources');
-    const passwordFilePath = path.join(basePath, 'mots-de-passe.txt');
+    const basePath = process.resourcesPath;
+    const passwordFilePath = path.join(basePath, 'resources', 'mots-de-passe.txt');
 
     if (!fs.existsSync(passwordFilePath)) {
-      throw new Error('Fichier passwords.txt introuvable.');
+      throw new Error('Fichier mots-de-passe.txt introuvable.');
     }
 
     const content = await fsPromises.readFile(passwordFilePath, 'utf-8');
     const lines = content.split(/\r?\n/).filter(Boolean);
 
     if (lines.length === 0) {
-      throw new Error('Aucun mot de passe trouvé dans passwords.txt');
+      throw new Error('Aucun mot de passe trouvé dans mots-de-passe.txt');
     }
 
     const randomIndex = Math.floor(Math.random() * lines.length);
@@ -553,6 +551,7 @@ ipcMain.handle('get-random-password', async () => {
     return null;
   }
 });
+
 
 
 app.whenReady().then(() => {

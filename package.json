@@ -34,7 +34,7 @@
         "to": "resources/.env.key"
       },
       {
-        "from": "renderer/mots-de-passe.txt",
+        "from": "mots-de-passe.txt",
         "to": "resources/mots-de-passe.txt"
       }
     ],
