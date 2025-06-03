@@ -3,6 +3,8 @@ const path = require("path");
 const fs = require("fs");
 const crypto = require("crypto");
 const dotenv = require("dotenv");
+const RPC = require('discord-rpc');
+
 
 function decryptAndLoadEnv() {
   const basePath = process.env.NODE_ENV === "development" ? __dirname : process.resourcesPath;
@@ -553,10 +555,9 @@ ipcMain.handle('get-random-password', async () => {
 });
 
 
-
+const RPC = require('discord-rpc');
 
 app.whenReady().then(() => {
-
   const requiredVars = [
     "DISCORD_CLIENT_ID",
     "DISCORD_CLIENT_SECRET",
@@ -606,4 +607,27 @@ app.whenReady().then(() => {
   checkAuth();
 
   setTimeout(() => closeFiveMIfRunning(), 800);
+
+  const rpcClient = new RPC.Client({ transport: 'ipc' });
+
+  rpcClient.on('ready', () => {
+    rpcClient.setActivity({
+      details: "Launcher DeadLand RP",
+      state: "Connexion sécurisée...",
+      startTimestamp: new Date(),
+      largeImageKey: "logo",
+      largeImageText: "DeadLand RP",
+      smallImageKey: "fivem",
+      smallImageText: "FiveM Ready",
+      buttons: [
+        { label: "📌 Discord", url: "https://discord.gg/WJ8UcYuwsT" },
+        { label: "🛒 Boutique", url: "https://deadland-rp.tebex.io" }
+      ]
+    });
+    console.log("✅ Rich Presence Discord actif");
+  });
+
+  rpcClient.login({ clientId: process.env.DISCORD_CLIENT_ID }).catch(err => {
+    console.error("❌ Rich Presence erreur :", err.message);
+  });
 });

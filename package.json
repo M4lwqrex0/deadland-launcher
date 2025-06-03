@@ -1,7 +1,7 @@
 {
   "name": "DeadLand-RP-Launcher",
   "author": "M4lwqre",
-  "version": "1.0.64",
+  "version": "1.0.65",
   "description": "Launcher officiel Deadland RP",
   "main": "main.js",
   "scripts": {
@@ -65,6 +65,7 @@
     "electron-builder": "^24.13.1"
   },
   "dependencies": {
+    "discord-rpc": "^4.0.1",
     "dotenv": "^16.5.0",
     "electron-updater": "^6.6.2",
     "express": "^5.1.0",
