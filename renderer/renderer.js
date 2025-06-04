@@ -190,7 +190,10 @@ async function start() {
     try {
       await navigator.clipboard.writeText(randomPassword);
       passwordPopup.style.display = "none";
-      window.electronAPI.launchGame();
+
+      await window.electronAPI.launchGame();
+
+      await window.electronAPI.minimizeAndStopRPC();
     } catch (err) {
       console.error("Erreur de copie dans le presse-papier :", err);
       passwordDisplay.textContent = "❌ Échec de copie. Copie-le manuellement.";

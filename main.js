@@ -79,6 +79,9 @@ const express = require("express");
 const http = require("http");
 const open = require("open");
 const fetch = require("node-fetch");
+const { Tray, Menu } = require("electron");
+let tray = null;
+let rpcClient = null;
 
 const clientId = process.env.DISCORD_CLIENT_ID;
 const clientSecret = process.env.DISCORD_CLIENT_SECRET;
@@ -554,6 +557,15 @@ ipcMain.handle('get-random-password', async () => {
   }
 });
 
+ipcMain.handle('minimizeAndStopRPC', () => {
+  if (mainWindow) mainWindow.hide(); // ou .destroy() si tu veux vraiment le fermer
+  if (rpcClient) {
+    rpcClient.clearActivity();
+    rpcClient.destroy();
+    console.log("🛑 Rich Presence arrêté.");
+  }
+});
+
 app.whenReady().then(() => {
   const requiredVars = [
     "DISCORD_CLIENT_ID",
@@ -605,7 +617,7 @@ app.whenReady().then(() => {
 
   setTimeout(() => closeFiveMIfRunning(), 800);
 
-  const rpcClient = new RPC.Client({ transport: 'ipc' });
+  rpcClient = new RPC.Client({ transport: 'ipc' });
 
   rpcClient.on('ready', () => {
     const version = app.getVersion();
@@ -629,4 +641,14 @@ app.whenReady().then(() => {
   rpcClient.login({ clientId: process.env.DISCORD_CLIENT_ID }).catch(err => {
     console.error("❌ Rich Presence erreur :", err.message);
   });
+
+  // Icône Tray (lancement en fond)
+  tray = new Tray(path.join(__dirname, "icon.ico"));
+  const contextMenu = Menu.buildFromTemplate([
+    { label: "🔄 Réouvrir le launcher", click: () => mainWindow.show() },
+    { label: "❌ Quitter", click: () => app.quit() }
+  ]);
+  tray.setToolTip("DeadLand RP Launcher");
+  tray.setContextMenu(contextMenu);
+
 });
