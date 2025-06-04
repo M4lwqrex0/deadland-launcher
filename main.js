@@ -608,17 +608,19 @@ app.whenReady().then(() => {
   const rpcClient = new RPC.Client({ transport: 'ipc' });
 
   rpcClient.on('ready', () => {
+    const version = app.getVersion();
+
     rpcClient.setActivity({
-      details: "Launcher DeadLand RP",
-      state: "Connexion sécurisée../Scanner de cheats",
+      details: "🛡️ DeadLand RP Launcher",
+      state: `⚙️ Version : v${version}`,
       startTimestamp: new Date(),
       largeImageKey: "logo",
-      largeImageText: "DeadLand RP",
+      largeImageText: "🔰 Sécurité & RP Immersif",
       smallImageKey: "fivem",
-      smallImageText: "FiveM Ready",
+      smallImageText: "FiveM prêt",
       buttons: [
-        { label: "📌 Discord", url: "https://discord.gg/WJ8UcYuwsT" },
-        { label: "🛒 Boutique", url: "https://deadland-rp.tebex.io" }
+        { label: "📌 Rejoindre Discord", url: "https://discord.gg/WJ8UcYuwsT" },
+        { label: "🛒 Boutique RP", url: "https://deadland-rp.tebex.io" }
       ]
     });
     console.log("✅ Rich Presence Discord actif");
