@@ -249,6 +249,13 @@ async function checkAuth() {
         return server.close();
       }
 
+      const userData = {
+        id: user.id,
+        username: user.username,
+        discriminator: user.discriminator,
+        avatar: user.avatar
+      };
+
       fs.writeFileSync(userDataPath, JSON.stringify(userData, null, 2));
       console.log("✅ Authentification réussie :", user.username);
 
