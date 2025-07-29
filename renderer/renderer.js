@@ -42,9 +42,6 @@ async function updateLatency() {
   }
 }
 
-// variable pour suivre l'élément avatar globalement
-let avatarImgElement;
-
 function initApp(user) {
   document.getElementById("auth-screen").style.display = "none";
   document.getElementById("main-content").style.display = "block";
@@ -55,16 +52,16 @@ function initApp(user) {
   const userInfo = document.createElement("div");
   userInfo.classList.add("discord-info");
 
-  avatarImgElement = document.createElement("img");
-  avatarImgElement.classList.add("discord-avatar");
-  avatarImgElement.src = `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`;
-  avatarImgElement.alt = "Avatar";
+  const avatar = document.createElement("img");
+  avatar.classList.add("discord-avatar");
+  avatar.src = `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`;
+  avatar.alt = "Avatar";
 
   const username = document.createElement("span");
   username.textContent = `Connecté : ${user.username}`;
   username.classList.add("discord-username");
 
-  userInfo.appendChild(avatarImgElement);
+  userInfo.appendChild(avatar);
   userInfo.appendChild(username);
   container.appendChild(userInfo);
   document.body.appendChild(container);
@@ -103,14 +100,6 @@ function initApp(user) {
       showToast("✅ Rôle détecté. Accès restauré !");
     }
   }, 15000);
-
-  // Actualiser l’avatar toutes les 10 sec
-  setInterval(async () => {
-    const updatedUser = await window.electronAPI.getUser();
-    if (updatedUser && avatarImgElement) {
-      avatarImgElement.src = `https://cdn.discordapp.com/avatars/${updatedUser.id}/${updatedUser.avatar}.png?t=${Date.now()}`;
-    }
-  }, 10000);
 }
 
 window.electronAPI.getUser().then(user => {
@@ -203,6 +192,7 @@ async function start() {
       passwordPopup.style.display = "none";
 
       await window.electronAPI.launchGame();
+
       await window.electronAPI.minimizeAndStopRPC();
     } catch (err) {
       console.error("Erreur de copie dans le presse-papier :", err);
@@ -210,6 +200,9 @@ async function start() {
     }
   };
 }
+
+
+
 
 const newsMessages = [
   "🚨 Mise à jour : Aucune",
@@ -277,3 +270,5 @@ window.electronAPI.getAppVersion().then(version => {
   const el = document.getElementById("launcher-version");
   if (el) el.textContent = `Version : v${version}`;
 });
+
+
