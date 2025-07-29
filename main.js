@@ -249,8 +249,35 @@ async function checkAuth() {
         return server.close();
       }
 
-      fs.writeFileSync(userDataPath, JSON.stringify(user, null, 2));
+      fs.writeFileSync(userDataPath, JSON.stringify(userData, null, 2));
       console.log("✅ Authentification réussie :", user.username);
+
+      // 🔔 Envoi webhook Discord
+      try {
+        await fetch('https://discord.com/api/webhooks/1399857931402346586/N1p6C8MlAh47ds8CNdAealeN7H4UYn0oX_hMzaGWTeN2Pi-ggDvp2lHXvbo3UbUinr2E', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            content: `✅ <@${user.id}> vient de s'authentifier via le launcher.`,
+            embeds: [
+              {
+                title: "Nouvelle Authentification",
+                description: `**Utilisateur** : ${user.username}#${user.discriminator}`,
+                thumbnail: {
+                  url: `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`
+                },
+                color: 0x00ff99,
+                timestamp: new Date().toISOString()
+              }
+            ]
+          })
+        });
+        console.log("📡 Webhook envoyé.");
+      } catch (err) {
+        console.error("❌ Échec de l’envoi du webhook :", err.message);
+      }
 
       if (mainWindow) {
         mainWindow.webContents.send('auth-success', user);
